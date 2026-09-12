@@ -33,7 +33,7 @@ public class EventsController {
         List<Event> result = new ArrayList<>();
 
         for(Event event : events.values()) {
-            if(city == null || event.city().equals(city)) {
+            if(city == null || event.city().equalsIgnoreCase(city)) {
                 result.add(event);
             }
         }
