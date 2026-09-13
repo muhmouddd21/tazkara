@@ -32,7 +32,7 @@ public class EventService {
     }
 
     public Event create(CreateEventRequest request) {
-        if (eventRepo.existsByNameorCity(request.name(), request.city())) {
+        if (eventRepo.existsByNameorCity( request.city(),request.name())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "an event named '" + request.name() + "' already exists in " + request.city());
         }
