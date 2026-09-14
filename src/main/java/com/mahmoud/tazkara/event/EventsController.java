@@ -1,14 +1,15 @@
 package com.mahmoud.tazkara.event;
 
-import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import jakarta.validation.Valid;
@@ -26,8 +27,11 @@ public class EventsController {
 
 
     @GetMapping
-    public  List<Event> list(@RequestParam (required = false) String city) {
-        return eventService.list(city);
+    public  EventPageDTO list(@RequestParam (required = false) String city,
+                                @RequestParam(defaultValue = "0") int page,
+                                @RequestParam (defaultValue = "10")int size
+    ) {
+        return eventService.list(city,page,size);
         
 
     }   
@@ -39,7 +43,19 @@ public class EventsController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newEvent);
     }
+    @PutMapping ("/{id}")
+    public Event update(@PathVariable Long id,
+            @RequestBody @Valid UpdateEventRequest request
+    ) {
+
+        return eventService.update(id,request);
+    }
     
+    @DeleteMapping ("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id){
+        eventService.delete(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
 
 
     @GetMapping("/{id}")

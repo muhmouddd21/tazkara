@@ -39,4 +39,7 @@ public class EventRepo {
         return stored;
 
     }
+    public void deleteById(long id ){
+        events.remove(id);
+    }
 }

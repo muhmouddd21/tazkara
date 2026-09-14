@@ -16,14 +16,18 @@ public class EventService {
     }
 
 
-    public List<Event> list(String city) {
-        List<Event> all = eventRepo.findAll();
-        if (city == null) {
-            return all;
-        }
-        return all.stream()
-                .filter(event -> event.city().equalsIgnoreCase(city))
-                .toList();
+    public EventPageDTO list(String city, int page, int size) {
+        size=Math.min(size,50);
+
+        List<Event> filtered = eventRepo.findAll()
+        .stream()
+        .filter(event -> event.city().equalsIgnoreCase(city) || event.city()==null)
+        .toList();
+        
+        int from =Math.min(page * size, filtered.size());
+        int to = Math.min(from + size, filtered.size());
+
+        return new EventPageDTO(filtered.subList(from, to), page, size, filtered.size());
     }
 
 
@@ -40,4 +44,21 @@ public class EventService {
                 request.category(), request.totalSeats());
         return eventRepo.save(event);
     }
+
+    public Event update(Long id,UpdateEventRequest request){
+
+        eventRepo.findById(id)
+        .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
+
+        Event updatedEvent = new Event(id,request.name(),request.city(),request.category(),request.totalSeats());
+        return eventRepo.save(updatedEvent);
+    }
+    public void delete(long id){
+
+        eventRepo.findById(id)
+        .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
+        eventRepo.deleteById(id);
+    }
+
+
 }
