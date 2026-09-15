@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class UserRepo {
 
-    private Map<Long, User> users = new HashMap<>();
+    private Map<String, User> users = new HashMap<>();
 
     private final AtomicLong counter = new AtomicLong();
 
@@ -20,9 +20,10 @@ public class UserRepo {
         return new ArrayList<>(users.values());
     }
 
-    public Optional<User> findById(Long id) {
-        return Optional.ofNullable(users.get(id));
+    public Optional<User> findByEmail(String email) {
+        return Optional.ofNullable(users.get(email));
     }
+
 
     public User save(User user) {
         Long id = (user.id() != null)
@@ -36,12 +37,12 @@ public class UserRepo {
                 user.plan()
         );
 
-        users.put(id, stored);
+        users.put(user.email(), stored);
 
         return stored;
     }
 
-    public void deleteById(Long id) {
-        users.remove(id);
+    public void deleteByEmail(String email) {
+        users.remove(email);
     }
 }
