@@ -21,7 +21,7 @@ public class EventService {
 
         List<Event> filtered = eventRepo.findAll()
         .stream()
-        .filter(event -> event.city().equalsIgnoreCase(city) || event.city()==null)
+        .filter(event -> event.city()==null || event.city().equalsIgnoreCase(city) )
         .toList();
         
         int from =Math.min(page * size, filtered.size());
