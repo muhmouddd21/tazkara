@@ -10,6 +10,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Service 
 public class EventService {
     private final EventRepo eventRepo;
+    private static final int FREE_PLAN_EVENT_LIMIT = 3;
 
     public EventService(EventRepo repo){
         this.eventRepo=repo;
@@ -35,29 +36,54 @@ public class EventService {
         return eventRepo.findById(id);
     }
 
-    public Event create(CreateEventRequest request) {
+    public Event create(CreateEventRequest request,String email,boolean isPro) {
+        if (!isPro && eventRepo.countByOrganizer(email) >= FREE_PLAN_EVENT_LIMIT) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "free plan allows " + FREE_PLAN_EVENT_LIMIT + " events — upgrade to PRO for unlimited");
+        }
+
+
+
         if (eventRepo.existsByNameorCity( request.city(),request.name())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "an event named '" + request.name() + "' already exists in " + request.city());
         }
-        Event event = new Event(null, request.name(), request.city(),
+        Event event = new Event(null,email,request.name(), request.city(),
                 request.category(), request.totalSeats());
         return eventRepo.save(event);
     }
 
-    public Event update(Long id,UpdateEventRequest request){
+    public Event update(Long id,UpdateEventRequest request,String callerEmail,boolean plan){
 
-        eventRepo.findById(id)
+        Event existing = eventRepo.findById(id)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
 
-        Event updatedEvent = new Event(id,request.name(),request.city(),request.category(),request.totalSeats());
+        if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "only the organizer may modify this event");
+        }
+
+        Event updatedEvent = new Event(id,callerEmail,request.name(),request.city(),request.category(),request.totalSeats());
         return eventRepo.save(updatedEvent);
     }
-    public void delete(long id){
+    public void delete(long id,String callerEmail,boolean plan){
 
-        eventRepo.findById(id)
+        Event existing = eventRepo.findById(id)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
+
+        if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "only the organizer may modify this event");
+        }
+
         eventRepo.deleteById(id);
+    }
+
+
+    public EventStats stats() {
+        List<Event> all = eventRepo.findAll();
+        int seats = all.stream().mapToInt(Event::totalSeats).sum();
+        return new EventStats(all.size(), seats);
     }
 
 

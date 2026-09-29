@@ -2,6 +2,8 @@ package com.mahmoud.tazkara.event;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,33 +39,58 @@ public class EventsController {
     }   
 
     @PostMapping
-    public ResponseEntity<Event> create( @RequestBody @Valid CreateEventRequest request) {
+    public ResponseEntity<Event> create( @RequestBody @Valid CreateEventRequest request,Authentication authentication) {
+        String email = authentication.getName();
 
-        Event newEvent = eventService.create(request);
+        boolean isPro = authentication.getAuthorities()
+        .stream()
+        .anyMatch(a -> a.getAuthority().equals("PLAN_PRO"));
+
+
+        Event newEvent = eventService.create(request,email,isPro);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newEvent);
     }
     @PutMapping ("/{id}")
     public Event update(@PathVariable Long id,
-            @RequestBody @Valid UpdateEventRequest request
+            @RequestBody @Valid UpdateEventRequest request,Authentication authentication
     ) {
+        String email = authentication.getName();
 
-        return eventService.update(id,request);
+        boolean isPro = authentication.getAuthorities()
+        .stream()
+        .anyMatch(a -> a.getAuthority().equals("PLAN_PRO"));
+
+
+        return eventService.update(id,request,email,isPro);
     }
     
     @DeleteMapping ("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
-        eventService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Long id,Authentication authentication){
+
+        String email = authentication.getName();
+
+        boolean isPro = authentication.getAuthorities()
+        .stream()
+        .anyMatch(a -> a.getAuthority().equals("PLAN_PRO"));
+
+        eventService.delete(id,email,isPro);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 
+
+    @GetMapping("/stats")
+    @PreAuthorize("hasAuthority('PLAN_PRO')")
+    public EventStats stats() {
+        return eventService.stats();
+    }
+    
     @GetMapping("/{id}")
     public ResponseEntity<Event> get(@PathVariable Long id) {
 
         return eventService.get(id)
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
-    }
-    
+    }    
 }

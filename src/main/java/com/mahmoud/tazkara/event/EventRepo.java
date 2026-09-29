@@ -30,10 +30,14 @@ public class EventRepo {
         return false;
     }
 
+    public long countByOrganizer(String email){
+        return events.values().stream().filter(event -> event.organizerEmail().equalsIgnoreCase(email)).count();
+    }
+
     public Event save(Event event){
         Long id = (event.id() != null) ? event.id() : counter.incrementAndGet();
     
-        Event stored = new Event(id, event.name(), event.city(),
+        Event stored = new Event(id, event.organizerEmail(),event.name(), event.city(),
                 event.category(), event.totalSeats());
         events.put(id, stored);
         return stored;

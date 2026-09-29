@@ -25,7 +25,7 @@ public class AuthService {
         if(userRepo.findByEmail(registerRequest.email()).isPresent()){
             throw new ResponseStatusException(HttpStatus.CONFLICT,"email already registered");
         }
-        userRepo.save(new User(null,registerRequest.email(),encoder.encode(registerRequest.password()), "FREE"));
+        userRepo.save(new User(null,registerRequest.email(),encoder.encode(registerRequest.password()), Plan.FREE));
     }
 
 
@@ -35,5 +35,11 @@ public class AuthService {
                 .map(user -> new LoginResponse(jwtservice.generate(user)))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                         "invalid email or password"));
+    }
+
+    public void upgradeToPro(String email){
+        
+        User user =userRepo.findByEmail(email).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"no such user"));
+        userRepo.save(new User(user.id(),user.email(),user.passwordHash(),Plan.PRO));
     }
 }
