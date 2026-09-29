@@ -35,6 +35,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/auth/**", "/api/v1/health").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/events/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated())
             .exceptionHandling(ex -> ex.authenticationEntryPoint(
                 (request, response, e) -> response.sendError(
