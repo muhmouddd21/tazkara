@@ -44,7 +44,7 @@ public class EventService {
 
 
 
-        if (eventRepo.existsByNameIgnoreCaseAndCityIgnoreCase( request.city(),request.name())) {
+        if (eventRepo.existsByNameIgnoreCaseAndCityIgnoreCase(request.name(), request.city())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "an event named '" + request.name() + "' already exists in " + request.city());
         }
