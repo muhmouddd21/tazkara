@@ -13,7 +13,7 @@ public class EventServiceTest {
 
     @BeforeEach 
     void setUp() {
-        service = new EventService(new EventRepo());   // real service, real repo, no Spring
+        service = new EventService(new FakeEventRepo());   // real service, real repo, no Spring
     }
 
     private CreateEventRequest request(String name,String city){

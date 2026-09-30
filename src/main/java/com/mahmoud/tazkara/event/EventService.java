@@ -37,14 +37,14 @@ public class EventService {
     }
 
     public Event create(CreateEventRequest request,String email,boolean isPro) {
-        if (!isPro && eventRepo.countByOrganizer(email) >= FREE_PLAN_EVENT_LIMIT) {
+        if (!isPro && eventRepo.countByOrganizerEmailIgnoreCase(email) >= FREE_PLAN_EVENT_LIMIT) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "free plan allows " + FREE_PLAN_EVENT_LIMIT + " events — upgrade to PRO for unlimited");
         }
 
 
 
-        if (eventRepo.existsByNameorCity( request.city(),request.name())) {
+        if (eventRepo.existsByNameIgnoreCaseAndCityIgnoreCase( request.city(),request.name())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT,
                     "an event named '" + request.name() + "' already exists in " + request.city());
         }
