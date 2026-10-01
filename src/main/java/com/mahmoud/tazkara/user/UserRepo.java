@@ -1,48 +1,15 @@
 package com.mahmoud.tazkara.user;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicLong;
 
-import org.springframework.stereotype.Repository;
-
-@Repository
-public class UserRepo {
-
-    private Map<String, User> users = new HashMap<>();
-
-    private final AtomicLong counter = new AtomicLong();
-
-    public List<User> findAll() {
-        return new ArrayList<>(users.values());
-    }
-
-    public Optional<User> findByEmail(String email) {
-        return Optional.ofNullable(users.get(email));
-    }
+import org.springframework.data.repository.Repository;
 
 
-    public User save(User user) {
-        Long id = (user.id() != null)
-                ? user.id()
-                : counter.incrementAndGet();
+public interface UserRepo extends Repository<User, Long> {  
 
-        User stored = new User(
-                id,
-                user.email(),
-                user.passwordHash(),
-                user.plan()
-        );
+    Optional<User> findByEmail(String email);
 
-        users.put(user.email(), stored);
+    User save(User user);
 
-        return stored;
-    }
-
-    public void deleteByEmail(String email) {
-        users.remove(email);
-    }
+    void deleteByEmail(String email);
 }

@@ -7,6 +7,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.mahmoud.tazkara.security.JwtService;
 
+import jakarta.transaction.Transactional;
+
 
 
 @Service 
@@ -20,7 +22,7 @@ public class AuthService {
         this.userRepo =userRepo;
         this.encoder = encoder;
     }
-
+    @Transactional 
     public void register(RegisterRequest registerRequest){
         if(userRepo.findByEmail(registerRequest.email()).isPresent()){
             throw new ResponseStatusException(HttpStatus.CONFLICT,"email already registered");
@@ -29,6 +31,7 @@ public class AuthService {
     }
 
 
+    @Transactional 
     public LoginResponse login(LoginRequest request) {
         return userRepo.findByEmail(request.email())
                 .filter(user -> encoder.matches(request.password(), user.passwordHash()))
@@ -37,6 +40,7 @@ public class AuthService {
                         "invalid email or password"));
     }
 
+    @Transactional 
     public void upgradeToPro(String email){
         
         User user =userRepo.findByEmail(email).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"no such user"));
