@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import jakarta.transaction.Transactional;
+
 @Service 
 public class EventService {
     private final EventRepo eventRepo;
@@ -28,7 +30,7 @@ public class EventService {
         int from =Math.min(page * size, filtered.size());
         int to = Math.min(from + size, filtered.size());
 
-        return new EventPageDTO(filtered.subList(from, to), page, size, filtered.size());
+        return new EventPageDTO(filtered.subList(from, to).stream().map(EventResponseDTO::from).toList(), page, size, filtered.size());
     }
 
 
@@ -36,6 +38,7 @@ public class EventService {
         return eventRepo.findById(id);
     }
 
+    @Transactional
     public Event create(CreateEventRequest request,String email,boolean isPro) {
         if (!isPro && eventRepo.countByOrganizerEmailIgnoreCase(email) >= FREE_PLAN_EVENT_LIMIT) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -53,6 +56,7 @@ public class EventService {
         return eventRepo.save(event);
     }
 
+    @Transactional
     public Event update(Long id,UpdateEventRequest request,String callerEmail,boolean plan){
 
         Event existing = eventRepo.findById(id)
@@ -66,6 +70,7 @@ public class EventService {
         Event updatedEvent = new Event(id,callerEmail,request.name(),request.city(),request.category(),request.totalSeats());
         return eventRepo.save(updatedEvent);
     }
+    @Transactional 
     public void delete(long id,String callerEmail,boolean plan){
 
         Event existing = eventRepo.findById(id)

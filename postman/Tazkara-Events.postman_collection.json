@@ -1,0 +1,399 @@
+{
+  "info": {
+    "name": "Tazkara – Events API",
+    "description": "API contract for `EventsController` (`/api/v1/events`).\n\n## Authentication\nAll write endpoints require `Authorization: Bearer <JWT>`. Obtain a token via `POST /api/v1/auth/login` (see the *Auth helper* folder). The JWT carries a `plan` claim (`FREE` or `PRO`) that becomes the authority `PLAN_FREE` / `PLAN_PRO`.\n\n| Endpoint | Auth |\n|---|---|\n| `GET /api/v1/events` | public |\n| `GET /api/v1/events/{id}` | public |\n| `GET /api/v1/events/stats` | Bearer, `PLAN_PRO` only |\n| `POST /api/v1/events` | Bearer |\n| `PUT /api/v1/events/{id}` | Bearer, organizer only |\n| `DELETE /api/v1/events/{id}` | Bearer, organizer only |\n\n## Common error responses\nErrors use the Spring Boot default error body:\n```json\n{ \"timestamp\": \"...\", \"status\": 403, \"error\": \"Forbidden\", \"message\": \"...\", \"path\": \"/api/v1/events\" }\n```\n- `401 Unauthorized` – missing or invalid token (message: `missing or invalid token`).\n- `400 Bad Request` – request body fails validation.\n\n## Variables\n- `baseUrl` – e.g. `http://localhost:8080`\n- `token` – JWT, set automatically by the *Login* request.\n- `eventId` – id used by the `{id}` requests, set automatically by *Create event*.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "eventId", "value": "1", "type": "string" },
+    { "key": "email", "value": "organizer@example.com", "type": "string" },
+    { "key": "password", "value": "password123", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth helper",
+      "description": "Not part of the events controller. Included so the collection is runnable end-to-end.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/register", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "register"] },
+            "description": "Creates a FREE-plan user. `password` must be at least 8 characters.\n\n- `201 Created` – empty body\n- `400 Bad Request` – validation failure\n- `409 Conflict` – `email already registered`"
+          },
+          "response": []
+        },
+        {
+          "name": "Login (stores {{token}})",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('returns token', () => pm.expect(json.token).to.be.a('string'));",
+                  "pm.collectionVariables.set('token', json.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "login"] },
+            "description": "Returns a JWT valid for `tazkara.jwt.expiry-minutes` (default 60). The test script saves it into the `token` collection variable.\n\n- `200 OK` – `{ \"token\": \"<jwt>\" }`\n- `401 Unauthorized` – `invalid email or password`"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/auth/login" } },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"token\": \"eyJhbGciOiJIUzI1NiJ9...\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "List events",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "pm.test('has page shape', () => {",
+                  "  pm.expect(json).to.have.all.keys('items', 'page', 'size', 'totalItems');",
+                  "  pm.expect(json.items).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events?city=Cairo&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "events"],
+              "query": [
+                { "key": "city", "value": "Cairo", "description": "Optional. Case-insensitive exact match on city. Omit to list all events.", "disabled": false },
+                { "key": "page", "value": "0", "description": "Optional. Zero-based page index. Default `0`." },
+                { "key": "size", "value": "10", "description": "Optional. Page size. Default `10`, capped server-side at `50`." }
+              ]
+            },
+            "description": "**Public.** Returns a page of events, optionally filtered by city.\n\n### Query parameters\n| Name | Type | Required | Default | Notes |\n|---|---|---|---|---|\n| `city` | string | no | – | case-insensitive exact match |\n| `page` | int | no | `0` | zero-based |\n| `size` | int | no | `10` | values above `50` are clamped to `50` |\n\n### Response `200 OK` – `EventPageDTO`\n| Field | Type | Description |\n|---|---|---|\n| `items` | `EventResponseDTO[]` | events on this page |\n| `page` | int | echoed page index |\n| `size` | int | effective page size (after clamping) |\n| `totalItems` | int | total matching events across all pages |\n\n`EventResponseDTO`: `{ id, name, city, type, capacity, organizerEmail }` – note `type` maps to the entity's `category` and `capacity` to `totalSeats`.\n\nA page beyond the last one returns `items: []` with the correct `totalItems`."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/events?city=Cairo&page=0&size=10" } },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"name\": \"Jazz Night\",\n      \"city\": \"Cairo\",\n      \"type\": \"music\",\n      \"capacity\": 200,\n      \"organizerEmail\": \"organizer@example.com\"\n    }\n  ],\n  \"page\": 0,\n  \"size\": 10,\n  \"totalItems\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get event by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 or 404', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "events", "{{eventId}}"]
+            },
+            "description": "**Public.** Returns a single event.\n\n### Path parameters\n| Name | Type | Notes |\n|---|---|---|\n| `id` | long | event id |\n\n### Responses\n- `200 OK` – the `Event` entity. **Note:** unlike every other endpoint this returns the raw entity, so field names are `category` and `totalSeats` (not `type` / `capacity`).\n- `404 Not Found` – empty body."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/events/1" } },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"organizerEmail\": \"organizer@example.com\",\n  \"name\": \"Jazz Night\",\n  \"city\": \"Cairo\",\n  \"category\": \"music\",\n  \"totalSeats\": 200\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/events/999" } },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Create event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const json = pm.response.json();",
+                  "  pm.collectionVariables.set('eventId', json.id);",
+                  "  pm.test('returns EventResponseDTO', () => {",
+                  "    pm.expect(json).to.have.all.keys('id', 'name', 'city', 'type', 'capacity', 'organizerEmail');",
+                  "  });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jazz Night\",\n  \"city\": \"Cairo\",\n  \"category\": \"music\",\n  \"totalSeats\": 200\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/v1/events", "host": ["{{baseUrl}}"], "path": ["api", "v1", "events"] },
+            "description": "**Requires Bearer token.** Creates an event owned by the caller (organizer = JWT subject email).\n\n### Request body – `CreateEventRequest`\n| Field | Type | Rules |\n|---|---|---|\n| `name` | string | required, not blank |\n| `city` | string | required, not blank |\n| `category` | string | required; letters only (`^[a-zA-Z]+$`); must be one of `music`, `conference`, `culture`, `film`, `sport` (case-insensitive) |\n| `totalSeats` | int | `1` ≤ value ≤ `1000` |\n\n### Business rules\n- FREE-plan users may own at most **3** events. PRO users are unlimited.\n- `name` + `city` must be unique (case-insensitive).\n\n### Responses\n- `201 Created` – `EventResponseDTO` of the new event. The test script stores its `id` into `{{eventId}}`.\n- `400 Bad Request` – validation failure.\n- `401 Unauthorized` – missing/invalid token.\n- `403 Forbidden` – `free plan allows 3 events — upgrade to PRO for unlimited`.\n- `409 Conflict` – `an event named '<name>' already exists in <city>`."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/events" } },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Jazz Night\",\n  \"city\": \"Cairo\",\n  \"type\": \"music\",\n  \"capacity\": 200,\n  \"organizerEmail\": \"organizer@example.com\"\n}"
+            },
+            {
+              "name": "400 Bad Request (validation)",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/events" } },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 400,\n  \"error\": \"Bad Request\",\n  \"path\": \"/api/v1/events\"\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/events" } },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 401,\n  \"error\": \"Unauthorized\",\n  \"message\": \"missing or invalid token\",\n  \"path\": \"/api/v1/events\"\n}"
+            },
+            {
+              "name": "403 Forbidden (free plan limit)",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/events" } },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"free plan allows 3 events — upgrade to PRO for unlimited\",\n  \"path\": \"/api/v1/events\"\n}"
+            },
+            {
+              "name": "409 Conflict (duplicate name+city)",
+              "originalRequest": { "method": "POST", "url": { "raw": "{{baseUrl}}/api/v1/events" } },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 409,\n  \"error\": \"Conflict\",\n  \"message\": \"an event named 'Jazz Night' already exists in Cairo\",\n  \"path\": \"/api/v1/events\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expected status', () => pm.expect(pm.response.code).to.be.oneOf([200, 400, 401, 403, 404]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jazz Night (Extended)\",\n  \"city\": \"Cairo\",\n  \"category\": \"music\",\n  \"totalSeats\": 300\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "events", "{{eventId}}"]
+            },
+            "description": "**Requires Bearer token.** Full replacement of an event. Only the organizer (JWT subject == `organizerEmail`, case-insensitive) may update.\n\n### Path parameters\n| Name | Type |\n|---|---|\n| `id` | long |\n\n### Request body – `UpdateEventRequest`\nSame shape and validation rules as `CreateEventRequest`: `name`, `city`, `category`, `totalSeats`. All fields are required (this is a full PUT, not a partial update).\n\n### Responses\n- `200 OK` – updated `EventResponseDTO`.\n- `400 Bad Request` – validation failure.\n- `401 Unauthorized` – missing/invalid token.\n- `403 Forbidden` – `only the organizer may modify this event`.\n- `404 Not Found` – no event with that id."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{baseUrl}}/api/v1/events/1" } },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Jazz Night (Extended)\",\n  \"city\": \"Cairo\",\n  \"type\": \"music\",\n  \"capacity\": 300,\n  \"organizerEmail\": \"organizer@example.com\"\n}"
+            },
+            {
+              "name": "403 Forbidden (not organizer)",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{baseUrl}}/api/v1/events/1" } },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"only the organizer may modify this event\",\n  \"path\": \"/api/v1/events/1\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": { "method": "PUT", "url": { "raw": "{{baseUrl}}/api/v1/events/999" } },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 404,\n  \"error\": \"Not Found\",\n  \"message\": \"event999is not found\",\n  \"path\": \"/api/v1/events/999\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expected status', () => pm.expect(pm.response.code).to.be.oneOf([204, 401, 403, 404]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "events", "{{eventId}}"]
+            },
+            "description": "**Requires Bearer token.** Deletes an event. Only the organizer may delete.\n\n### Path parameters\n| Name | Type |\n|---|---|\n| `id` | long |\n\n### Responses\n- `204 No Content` – deleted, empty body.\n- `401 Unauthorized` – missing/invalid token.\n- `403 Forbidden` – `only the organizer may modify this event`.\n- `404 Not Found` – no event with that id."
+          },
+          "response": [
+            {
+              "name": "204 No Content",
+              "originalRequest": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/v1/events/1" } },
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "text",
+              "header": [],
+              "body": ""
+            },
+            {
+              "name": "403 Forbidden (not organizer)",
+              "originalRequest": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/api/v1/events/1" } },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"message\": \"only the organizer may modify this event\",\n  \"path\": \"/api/v1/events/1\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Event stats (PRO only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('expected status', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));",
+                  "if (pm.response.code === 200) {",
+                  "  pm.test('has stats shape', () => pm.expect(pm.response.json()).to.have.all.keys('totalEvents', 'totalSeats'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/v1/events/stats", "host": ["{{baseUrl}}"], "path": ["api", "v1", "events", "stats"] },
+            "description": "**Requires Bearer token with `PLAN_PRO` authority.** Aggregate numbers across all events.\n\n### Responses\n- `200 OK` – `EventStats`:\n  | Field | Type |\n  |---|---|\n  | `totalEvents` | long |\n  | `totalSeats` | int (sum of `totalSeats` across events) |\n- `401 Unauthorized` – missing/invalid token.\n- `403 Forbidden` – authenticated but plan is not PRO.\n\n> Note: the security config permits all `GET /api/v1/events/**` at the filter level, so an anonymous call reaches the method-level `@PreAuthorize` check. Depending on Spring Security's handling this surfaces as `401` (anonymous) or `403` (FREE user)."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/events/stats" } },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"totalEvents\": 12,\n  \"totalSeats\": 3400\n}"
+            },
+            {
+              "name": "403 Forbidden (FREE plan)",
+              "originalRequest": { "method": "GET", "url": { "raw": "{{baseUrl}}/api/v1/events/stats" } },
+              "status": "Forbidden",
+              "code": 403,
+              "_postman_previewlanguage": "json",
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"path\": \"/api/v1/events/stats\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -39,7 +39,7 @@ public class EventsController {
     }   
 
     @PostMapping
-    public ResponseEntity<Event> create( @RequestBody @Valid CreateEventRequest request,Authentication authentication) {
+    public ResponseEntity<EventResponseDTO> create( @RequestBody @Valid CreateEventRequest request,Authentication authentication) {
         String email = authentication.getName();
 
         boolean isPro = authentication.getAuthorities()
@@ -49,10 +49,10 @@ public class EventsController {
 
         Event newEvent = eventService.create(request,email,isPro);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(newEvent);
+        return ResponseEntity.status(HttpStatus.CREATED).body(EventResponseDTO.from(newEvent));
     }
     @PutMapping ("/{id}")
-    public Event update(@PathVariable Long id,
+    public EventResponseDTO update(@PathVariable Long id,
             @RequestBody @Valid UpdateEventRequest request,Authentication authentication
     ) {
         String email = authentication.getName();
@@ -62,7 +62,7 @@ public class EventsController {
         .anyMatch(a -> a.getAuthority().equals("PLAN_PRO"));
 
 
-        return eventService.update(id,request,email,isPro);
+        return EventResponseDTO.from(eventService.update(id,request,email,isPro));
     }
     
     @DeleteMapping ("/{id}")
