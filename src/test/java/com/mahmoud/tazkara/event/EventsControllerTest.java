@@ -84,6 +84,20 @@ public class EventsControllerTest {
                         {"name":"  ","city":"Cairo","category":"music","totalSeats":0}"""))
                 .andExpect(status().isBadRequest());
     }
+    @Test
+    void nonOwnerCannotDeleteAnEvent() throws Exception {
+        String token1 = registerAndLogin("non-owner@tazkara.dev");
+        String token2 = registerAndLogin("owner@tazkara.dev");
 
-    
+        MvcResult result = mockMvc.perform(post("/api/v1/events")
+                .contentType("application/json").content(EVENT_JSON)
+                .header("Authorization", "Bearer " + token2)).andReturn();
+
+        Integer eventId = JsonPath.read(result.getResponse().getContentAsString(), "$.id");
+        mockMvc.perform(delete("/api/v1/events/{id}", eventId)
+                .header("Authorization", "Bearer " + token1))
+                .andExpect(status().isForbidden());
+    }   
+
+
 }
