@@ -3,6 +3,9 @@ package com.mahmoud.tazkara.event;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -21,16 +24,12 @@ public class EventService {
 
     public EventPageDTO list(String city, int page, int size) {
         size=Math.min(size,50);
+        Pageable pageable = PageRequest.of(page, Math.min(size, 50));
 
-        List<Event> filtered = eventRepo.findAll()
-        .stream()
-        .filter(event -> city ==null || event.city().equalsIgnoreCase(city) )
-        .toList();
-        
-        int from =Math.min(page * size, filtered.size());
-        int to = Math.min(from + size, filtered.size());
+        Page<Event> result = (city == null) ? eventRepo.findAll(pageable) : eventRepo.findByCityIgnoreCase(city, pageable);
+                                
 
-        return new EventPageDTO(filtered.subList(from, to).stream().map(EventResponseDTO::from).toList(), page, size, filtered.size());
+        return new EventPageDTO(result.getContent().stream().map(EventResponseDTO::from).toList(), page, size, result.getTotalElements());
     }
 
 
@@ -86,9 +85,10 @@ public class EventService {
 
 
     public EventStats stats() {
-        List<Event> all = eventRepo.findAll();
-        int seats = all.stream().mapToInt(Event::totalSeats).sum();
-        return new EventStats(all.size(), seats);
+        long count = eventRepo.count();
+        long seats = eventRepo.sumTotalSeats();
+    
+        return new EventStats(count, seats);
     }
 
 

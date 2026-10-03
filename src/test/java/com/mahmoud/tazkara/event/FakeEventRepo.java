@@ -7,6 +7,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+
 
 
  
@@ -14,6 +18,13 @@ public class FakeEventRepo implements EventRepo{
     private Map<Long,Event> events = new HashMap<>();
     private final AtomicLong counter = new AtomicLong();
 
+
+
+    private Page<Event> pageOf(List<Event> all, Pageable pageable) {
+        int from = Math.min((int) pageable.getOffset(), all.size());
+        int to = Math.min(from + pageable.getPageSize(), all.size());
+        return new PageImpl<>(all.subList(from, to), pageable, all.size());
+    }
 
     @Override
     public boolean existsByNameIgnoreCaseAndCityIgnoreCase(String name, String city) {
@@ -39,12 +50,6 @@ public class FakeEventRepo implements EventRepo{
 
 
     @Override
-    public List<Event> findAll() {
-        return new ArrayList<>(events.values());
-    }
-
-
-    @Override
     public Optional<Event> findById(Long id) {
         return Optional.ofNullable(events.get(id));
 
@@ -59,6 +64,20 @@ public class FakeEventRepo implements EventRepo{
                 event.category(), event.totalSeats());
         events.put(id, stored);
         return stored;
+    }
+
+
+    @Override
+    public Page<Event> findAll(Pageable pageable) {
+        return pageOf(new ArrayList<>(events.values()), pageable);
+    }
+
+
+    @Override
+    public Page<Event> findByCityIgnoreCase(String city, Pageable pageable) {
+        List<Event> matching = events.values().stream()
+                .filter(event -> event.city().equalsIgnoreCase(city)).toList();
+        return pageOf(matching, pageable);
     }
 
 }
