@@ -20,7 +20,6 @@ public interface EventRepo extends Repository<Event,Long> {
     @Query ("select coalesce(sum(e.totalSeats), 0) from Event e")
     long sumTotalSeats();   
 
-
     boolean existsByNameIgnoreCaseAndCityIgnoreCase(String name, String city);
 
 

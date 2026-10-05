@@ -80,4 +80,16 @@ public class FakeEventRepo implements EventRepo{
         return pageOf(matching, pageable);
     }
 
+    @Override
+    public long sumTotalSeats() {
+        return this.events.values().stream().mapToLong(Event::totalSeats).sum();
+    }
+
+
+    @Override
+    public long count() {
+        return this.events.size();
+
+    }
+
 }

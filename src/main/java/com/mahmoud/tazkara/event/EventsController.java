@@ -1,5 +1,7 @@
 package com.mahmoud.tazkara.event;
 
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,6 +12,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.mahmoud.tazkara.ticket.TicketResponseDTO;
+import com.mahmoud.tazkara.ticket.TicketsService;
+
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,9 +28,11 @@ import jakarta.validation.Valid;
 public class EventsController {
 
     private final EventService eventService;
+    private final TicketsService ticketsService;
 
-    public EventsController(EventService eventService){
+    public EventsController(EventService eventService,TicketsService ticketsService){
         this.eventService = eventService;
+        this.ticketsService=ticketsService;
     }
 
 
@@ -93,4 +101,19 @@ public class EventsController {
                     .map(ResponseEntity::ok)
                     .orElse(ResponseEntity.notFound().build());
     }    
+
+    @PostMapping("/{id}/tickets")
+    public TicketResponseDTO createTicket(@PathVariable  Long id,Authentication authentication) {
+        String email = authentication.getName();
+        return this.ticketsService.purchese(email,id);
+    }
+
+    @GetMapping("/tickets")
+    public List<TicketResponseDTO> getTicjets(Authentication authentication) {
+        String email = authentication.getName();
+
+        return this.ticketsService.myTickets(email);
+    }
+    
+    
 }
