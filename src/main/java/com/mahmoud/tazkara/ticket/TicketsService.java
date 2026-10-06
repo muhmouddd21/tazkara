@@ -26,9 +26,9 @@ public class TicketsService {
     }
 
     @Transactional 
-    public TicketResponseDTO purchese(String buyerEmail,Long eventId){
+    public TicketResponseDTO purchase(String buyerEmail,Long eventId){
         Event event = this.eventRepo.findById(eventId)
-        .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
         
 
         long sold = ticketRepo.countByEventId(eventId);          

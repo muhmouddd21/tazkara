@@ -25,7 +25,7 @@ public class TicketsServiceTest {
     @Test 
     void purchaseSucceedsWhenSeatsRemain(){ 
         this.eventRepo.save(new Event(1L, "mahmoud@gmail.com", "play","cairo", "music", 100));
-        this.service.purchese("ahmed@gmail.com", 1L);
+        this.service.purchase("ahmed@gmail.com", 1L);
 
         assertThat(service.myTickets("ahmed@gmail.com")).hasSize(1);
     }
@@ -34,16 +34,16 @@ public class TicketsServiceTest {
     @Test 
     void purchaseRejectedWhenSoldOut(){ 
         this.eventRepo.save(new Event(1L, "mahmoud@gmail.com", "play","cairo", "music", 1));
-        this.service.purchese("ahmed@gmail.com", 1L);
+        this.service.purchase("ahmed@gmail.com", 1L);
         
-        assertThatThrownBy(()-> this.service.purchese("ahmed@gmail.com", 1L)).hasMessageContaining("sold out");
+        assertThatThrownBy(()-> this.service.purchase("ahmed@gmail.com", 1L)).hasMessageContaining("sold out");
     }
 
     @Test
     void purchaseFailsForMissingEvent() {
 
         assertThatThrownBy(() ->
-                this.service.purchese("ahmed@gmail.com", 999L)
+                this.service.purchase("ahmed@gmail.com", 999L)
         )
         .hasMessageContaining("not found");
     }

@@ -103,9 +103,18 @@ public class EventsController {
     }    
 
     @PostMapping("/{id}/tickets")
-    public TicketResponseDTO createTicket(@PathVariable  Long id,Authentication authentication) {
+    public ResponseEntity<TicketResponseDTO> createTicket(
+            @PathVariable Long id,
+            Authentication authentication) {
+    
         String email = authentication.getName();
-        return this.ticketsService.purchese(email,id);
+    
+        TicketResponseDTO ticket =
+                ticketsService.purchase(email, id);
+    
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ticket);
     }
 
     @GetMapping("/tickets")
