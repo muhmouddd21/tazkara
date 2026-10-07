@@ -10,15 +10,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.mahmoud.tazkara.ticket.TicketRepo;
+
 import jakarta.transaction.Transactional;
 
 @Service 
 public class EventService {
     private final EventRepo eventRepo;
+    private final TicketRepo ticketrepo;
     private static final int FREE_PLAN_EVENT_LIMIT = 3;
 
-    public EventService(EventRepo repo){
+    public EventService(EventRepo repo,TicketRepo ticketrepo){
         this.eventRepo=repo;
+        this.ticketrepo=ticketrepo;
     }
 
 
@@ -75,9 +79,15 @@ public class EventService {
         Event existing = eventRepo.findById(id)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
 
+
+
         if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "only the organizer may modify this event");
+        }
+
+        if(this.ticketrepo.countByEventId(existing.id()) > 0){
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Cannot delete an event with sold tickets");
         }
 
         eventRepo.deleteById(id);

@@ -3,6 +3,8 @@ package com.mahmoud.tazkara.event;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.mahmoud.tazkara.ticket.FakeTicketRepo;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -13,7 +15,7 @@ public class EventServiceTest {
 
     @BeforeEach 
     void setUp() {
-        service = new EventService(new FakeEventRepo());   // real service, real repo, no Spring
+        service = new EventService(new FakeEventRepo(), new FakeTicketRepo());   // real service, real repo, no Spring
     }
 
     private CreateEventRequest request(String name,String city){

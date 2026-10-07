@@ -5,12 +5,12 @@ import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.mahmoud.tazkara.event.Event;
 import com.mahmoud.tazkara.event.EventRepo;
 
-import jakarta.transaction.Transactional;
 
 @Service 
 public class TicketsService {
