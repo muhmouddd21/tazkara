@@ -55,9 +55,9 @@ public class EventsController {
         .anyMatch(a -> a.getAuthority().equals("PLAN_PRO"));
 
 
-        Event newEvent = eventService.create(request,email,isPro);
+        EventResponseDTO newEvent = eventService.create(request,email,isPro);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(EventResponseDTO.from(newEvent));
+        return ResponseEntity.status(HttpStatus.CREATED).body(newEvent);
     }
     @PutMapping ("/{id}")
     public EventResponseDTO update(@PathVariable Long id,

@@ -1,5 +1,8 @@
 package com.mahmoud.tazkara.event;
 
+import java.time.Instant;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,8 +24,15 @@ public class Event {
     private String organizerEmail;
     private String name;
     private String city;
+    // private String venue;
     private String category;
     private int totalSeats;
+
+    @Column (insertable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(insertable = false, updatable = false)
+    private Instant updatedAt;  
 
     protected Event() {} 
 
@@ -43,5 +53,7 @@ public class Event {
     public String city() { return city; }
     public String category() { return category; }
     public int totalSeats() { return totalSeats; }
+    public Instant createdAt(){return createdAt;}
+    public Instant updatedAt(){return updatedAt;}
 }
 

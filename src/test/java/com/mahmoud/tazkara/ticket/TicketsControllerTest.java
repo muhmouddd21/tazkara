@@ -26,7 +26,7 @@ import jakarta.transaction.Transactional;
 @SpringBootTest
 @Transactional 
 @AutoConfigureMockMvc  
-@ActiveProfiles("tests")
+@ActiveProfiles("test")
 public class TicketsControllerTest {
 
     @Container 

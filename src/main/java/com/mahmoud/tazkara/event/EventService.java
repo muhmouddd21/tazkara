@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class EventService {
     }
 
     @Transactional
-    public Event create(CreateEventRequest request,String email,boolean isPro) {
+    public EventResponseDTO create(CreateEventRequest request,String email,boolean isPro) {
         if (!isPro && eventRepo.countByOrganizerEmailIgnoreCase(email) >= FREE_PLAN_EVENT_LIMIT) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "free plan allows " + FREE_PLAN_EVENT_LIMIT + " events — upgrade to PRO for unlimited");
@@ -56,7 +57,13 @@ public class EventService {
         }
         Event event = new Event(null,email,request.name(), request.city(),
                 request.category(), request.totalSeats());
-        return eventRepo.save(event);
+
+        try {
+            return EventResponseDTO.from(eventRepo.save(event));
+
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"an event named '" + request.name() + "' already exists in " + request.city());
+        }
     }
 
     @Transactional
