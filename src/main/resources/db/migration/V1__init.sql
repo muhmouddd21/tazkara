@@ -144,5 +144,3 @@ ALTER TABLE ONLY public.tickets
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZMdOwVyeGuntnd9de56LEymtK5IZgwHpj7OrWga46Nm7Z2imuxRKwlbVt4rmh8u
-

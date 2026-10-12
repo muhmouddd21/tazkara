@@ -9,11 +9,11 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.mahmoud.tazkara.ticket.TicketRepo;
 
-import jakarta.transaction.Transactional;
 
 @Service 
 public class EventService {
@@ -42,7 +42,7 @@ public class EventService {
         return eventRepo.findById(id);
     }
 
-    @Transactional
+    @Transactional 
     public EventResponseDTO create(CreateEventRequest request,String email,boolean isPro) {
         if (!isPro && eventRepo.countByOrganizerEmailIgnoreCase(email) >= FREE_PLAN_EVENT_LIMIT) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,

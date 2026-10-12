@@ -60,7 +60,7 @@ public class EventServiceTest {
 
     @Test
     void onlyTheOrganizerMayDelete() {
-        Event event = service.create(request("Jazz Night", "Cairo"), "owner@tazkara.dev", true);
+        EventResponseDTO event = service.create(request("Jazz Night", "Cairo"), "owner@tazkara.dev", true);
 
         assertThatThrownBy(() -> service.delete(event.id(), "intruder@tazkara.dev",true))
             .hasMessageContaining("organizer");
@@ -68,7 +68,7 @@ public class EventServiceTest {
 
     @Test 
     void updateCannotChangeTheOrganizer(){
-        Event event = service.create(request("Jazz Night", "Cairo"), "organizer@tazkara.dev", true);
+        EventResponseDTO event = service.create(request("Jazz Night", "Cairo"), "organizer@tazkara.dev", true);
         UpdateEventRequest newEvent = new UpdateEventRequest("mahmoud", "benha", "music", 100);
 
 
