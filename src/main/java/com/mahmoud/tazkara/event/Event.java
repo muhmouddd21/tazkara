@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 // public record Event(Long id,String organizerEmail ,String name, String city, String category, int totalSeats) {}
 
@@ -27,6 +28,9 @@ public class Event {
     // private String venue;
     private String category;
     private int totalSeats;
+
+    @Version 
+    private long version;
 
     @Column (insertable = false, updatable = false)
     private Instant createdAt;
@@ -55,5 +59,11 @@ public class Event {
     public int totalSeats() { return totalSeats; }
     public Instant createdAt(){return createdAt;}
     public Instant updatedAt(){return updatedAt;}
+    public long version() { return version; }
+
+    public void applyEdit(String name, String city, String category, int totalSeats) {
+        this.name = name; this.city = city;
+        this.category = category; this.totalSeats = totalSeats;
+    }
 }
 

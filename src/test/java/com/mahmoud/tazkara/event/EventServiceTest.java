@@ -69,7 +69,7 @@ public class EventServiceTest {
     @Test 
     void updateCannotChangeTheOrganizer(){
         EventResponseDTO event = service.create(request("Jazz Night", "Cairo"), "organizer@tazkara.dev", true);
-        UpdateEventRequest newEvent = new UpdateEventRequest("mahmoud", "benha", "music", 100);
+        UpdateEventRequest newEvent = new UpdateEventRequest("mahmoud", "benha", "music", 100,0L);
 
 
         assertThatThrownBy(() -> service.update(event.id(), newEvent, "mahmoud@tazkara.dev", true))

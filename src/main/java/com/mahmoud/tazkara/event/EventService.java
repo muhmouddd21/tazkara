@@ -73,19 +73,24 @@ public class EventService {
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
 
         if (eventRepo.existsByNameIgnoreCaseAndCityIgnoreCaseAndIdNot(request.name(), request.city(), id)) {
-        throw new ResponseStatusException(
+         throw new ResponseStatusException(
             HttpStatus.CONFLICT,
             "An event with this name already exists in this city"
-        );
-    }
+            );
+        }
+
+        if (!request.version().equals(existing.version())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "event was modified by someone else — reload and try again");
+        }
 
         if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "only the organizer may modify this event");
         }
 
-        Event updatedEvent = new Event(id,callerEmail,request.name(),request.city(),request.category(),request.totalSeats());
-        return eventRepo.save(updatedEvent);
+        existing.applyEdit(request.name(), request.city(), request.category(), request.totalSeats());
+        return existing;  
     }
     @Transactional 
     public void delete(long id,String callerEmail,boolean plan){
