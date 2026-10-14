@@ -27,7 +27,7 @@ public class TicketsService {
 
     @Transactional 
     public TicketResponseDTO purchase(String buyerEmail,Long eventId){
-        Event event = this.eventRepo.findById(eventId)
+        Event event = this.eventRepo.findWithLockById(eventId)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
         
 

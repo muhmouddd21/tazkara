@@ -39,7 +39,7 @@ public class EventService {
 
 
     public Optional<Event> get(Long id) {
-        return eventRepo.findById(id);
+        return eventRepo.findWithLockById(id);
     }
 
     @Transactional 
@@ -69,7 +69,7 @@ public class EventService {
     @Transactional
     public Event update(Long id,UpdateEventRequest request,String callerEmail,boolean plan){
 
-        Event existing = eventRepo.findById(id)
+        Event existing = eventRepo.findWithLockById(id)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
 
         if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
@@ -83,7 +83,7 @@ public class EventService {
     @Transactional 
     public void delete(long id,String callerEmail,boolean plan){
 
-        Event existing = eventRepo.findById(id)
+        Event existing = eventRepo.findWithLockById(id)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
 
 

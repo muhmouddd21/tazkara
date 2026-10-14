@@ -50,7 +50,7 @@ public class FakeEventRepo implements EventRepo{
 
 
     @Override
-    public Optional<Event> findById(Long id) {
+    public Optional<Event> findWithLockById(Long id) {
         return Optional.ofNullable(events.get(id));
 
     }
