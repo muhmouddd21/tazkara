@@ -50,7 +50,7 @@ public class FakeEventRepo implements EventRepo{
 
 
     @Override
-    public Optional<Event> findWithLockById(Long id) {
+    public Optional<Event> findById(Long id) {
         return Optional.ofNullable(events.get(id));
 
     }
@@ -90,6 +90,21 @@ public class FakeEventRepo implements EventRepo{
     public long count() {
         return this.events.size();
 
+    }
+
+    @Override
+    public Optional<Event> findWithLockById(Long id) { return findById(id); }
+
+    @Override
+    public boolean existsByNameIgnoreCaseAndCityIgnoreCaseAndIdNot(
+            String name, String city, Long id) {
+    
+        return events.values().stream()
+                .anyMatch(event ->
+                        !event.id().equals(id)
+                        && event.name().equalsIgnoreCase(name)
+                        && event.city().equalsIgnoreCase(city)
+                );
     }
 
 }

@@ -20,11 +20,13 @@ public interface EventRepo extends Repository<Event,Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Event> findWithLockById(Long id);
+    Optional<Event> findById(Long id);
 
     @Query ("select coalesce(sum(e.totalSeats), 0) from Event e")
     long sumTotalSeats();   
 
     boolean existsByNameIgnoreCaseAndCityIgnoreCase(String name, String city);
+    boolean existsByNameIgnoreCaseAndCityIgnoreCaseAndIdNot(String name, String city,Long id);
 
 
     long countByOrganizerEmailIgnoreCase(String organizerEmail);

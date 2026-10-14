@@ -72,6 +72,13 @@ public class EventService {
         Event existing = eventRepo.findWithLockById(id)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
 
+        if (eventRepo.existsByNameIgnoreCaseAndCityIgnoreCaseAndIdNot(request.name(), request.city(), id)) {
+        throw new ResponseStatusException(
+            HttpStatus.CONFLICT,
+            "An event with this name already exists in this city"
+        );
+    }
+
         if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "only the organizer may modify this event");
