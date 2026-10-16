@@ -95,11 +95,10 @@ public class EventsController {
     }
     
     @GetMapping("/{id}")
-    public ResponseEntity<Event> get(@PathVariable Long id) {
+    public EventResponseDTO get(@PathVariable Long id) {
 
-        return eventService.get(id)
-                    .map(ResponseEntity::ok)
-                    .orElse(ResponseEntity.notFound().build());
+        return eventService.get(id);
+        
     }    
 
     @PostMapping("/{id}/tickets")

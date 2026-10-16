@@ -1,8 +1,9 @@
 package com.mahmoud.tazkara.event;
 
+import java.io.Serializable;
 import java.time.Instant;
 
-public record EventResponseDTO(Long id, String name, String city, String type, int capacity, String organizerEmail,Instant createdAt,Instant updatedAt,Long version) {
+public record EventResponseDTO (Long id, String name, String city, String type, int capacity, String organizerEmail,Instant createdAt,Instant updatedAt,Long version)  implements Serializable {
 
 
     static EventResponseDTO from(Event event) {

@@ -1,10 +1,11 @@
 package com.mahmoud.tazkara.event;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -38,8 +39,10 @@ public class EventService {
     }
 
 
-    public Optional<Event> get(Long id) {
-        return eventRepo.findWithLockById(id);
+    @Cacheable(cacheNames = "events", key = "#id")
+    public EventResponseDTO get(Long id) {
+        return EventResponseDTO.from(eventRepo.findById(id)
+        .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event " + id + " not found")));
     }
 
     @Transactional 
@@ -67,10 +70,18 @@ public class EventService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = "events", key = "#id")
     public Event update(Long id,UpdateEventRequest request,String callerEmail,boolean plan){
 
-        Event existing = eventRepo.findWithLockById(id)
+
+
+        Event existing = eventRepo.findById(id)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND, "event" + id + "is not found"));
+
+        if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "only the organizer may modify this event");
+        }
 
         if (eventRepo.existsByNameIgnoreCaseAndCityIgnoreCaseAndIdNot(request.name(), request.city(), id)) {
          throw new ResponseStatusException(
@@ -84,15 +95,13 @@ public class EventService {
                 "event was modified by someone else — reload and try again");
         }
 
-        if (!existing.organizerEmail().equalsIgnoreCase(callerEmail)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "only the organizer may modify this event");
-        }
+
 
         existing.applyEdit(request.name(), request.city(), request.category(), request.totalSeats());
         return existing;  
     }
     @Transactional 
+    @CacheEvict(cacheNames = "events", key = "#id")
     public void delete(long id,String callerEmail,boolean plan){
 
         Event existing = eventRepo.findWithLockById(id)
