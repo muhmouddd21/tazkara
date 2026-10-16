@@ -6,6 +6,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,7 @@ public class EventService {
     }
 
     @Transactional 
+    @CacheEvict (cacheNames = "stats",key = "'event-stats'")
     public EventResponseDTO create(CreateEventRequest request,String email,boolean isPro) {
         if (!isPro && eventRepo.countByOrganizerEmailIgnoreCase(email) >= FREE_PLAN_EVENT_LIMIT) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
@@ -70,7 +72,10 @@ public class EventService {
     }
 
     @Transactional
-    @CacheEvict(cacheNames = "events", key = "#id")
+    @Caching(evict = {
+        @CacheEvict(cacheNames = "events", key = "#id"),
+        @CacheEvict(cacheNames = "stats", key = "'event-stats'")
+    })
     public Event update(Long id,UpdateEventRequest request,String callerEmail,boolean plan){
 
 
@@ -101,7 +106,10 @@ public class EventService {
         return existing;  
     }
     @Transactional 
-    @CacheEvict(cacheNames = "events", key = "#id")
+    @Caching (evict = {
+        @CacheEvict(cacheNames = "events", key = "#id"),
+        @CacheEvict(cacheNames = "stats", key = "'event-stats'")
+    })
     public void delete(long id,String callerEmail,boolean plan){
 
         Event existing = eventRepo.findWithLockById(id)
@@ -121,7 +129,7 @@ public class EventService {
         eventRepo.deleteById(id);
     }
 
-
+    @Cacheable(cacheNames = "stats", key = "'event-stats'")
     public EventStats stats() {
         long count = eventRepo.count();
         long seats = eventRepo.sumTotalSeats();
