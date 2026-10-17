@@ -1,7 +1,9 @@
 package com.mahmoud.tazkara.event;
 
+import java.time.Duration;
 import java.util.List;
 
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -95,11 +97,13 @@ public class EventsController {
     }
     
     @GetMapping("/{id}")
-    public EventResponseDTO get(@PathVariable Long id) {
-
-        return eventService.get(id);
-        
-    }    
+    public ResponseEntity<EventResponseDTO> get(@PathVariable Long id) {
+        EventResponseDTO event = eventService.get(id);
+        return ResponseEntity.ok()
+            .eTag("\"" + event.version() + "\"")                             
+            .cacheControl(CacheControl.maxAge(Duration.ofSeconds(60)).cachePublic())
+            .body(event);
+    }
 
     @PostMapping("/{id}/tickets")
     public ResponseEntity<TicketResponseDTO> createTicket(
