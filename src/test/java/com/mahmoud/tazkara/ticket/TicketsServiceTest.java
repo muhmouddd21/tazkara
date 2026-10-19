@@ -19,7 +19,7 @@ public class TicketsServiceTest {
         eventRepo = new FakeEventRepo();
         ticketRepo = new FakeTicketRepo();
 
-        service = new TicketsService(ticketRepo, eventRepo);
+        service = new TicketsService(ticketRepo, eventRepo,e ->{});
     }
     
     @Test 

@@ -3,6 +3,7 @@ package com.mahmoud.tazkara.ticket;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +18,13 @@ public class TicketsService {
     
     private final TicketRepo ticketRepo;
     private final EventRepo eventRepo;
+    private final ApplicationEventPublisher events;
 
 
-
-    public TicketsService(TicketRepo ticketRepo, EventRepo eventRepo) {
+    public TicketsService(TicketRepo ticketRepo, EventRepo eventRepo,ApplicationEventPublisher events) {
         this.ticketRepo = ticketRepo;
         this.eventRepo = eventRepo;
+        this.events =events;
     }
 
     @Transactional 
@@ -35,8 +37,9 @@ public class TicketsService {
         if (sold >= event.totalSeats()) {                       
             throw new ResponseStatusException(HttpStatus.CONFLICT, "event is sold out");
         }
-
-        return TicketResponseDTO.from(this.ticketRepo.save(new Ticket(event,buyerEmail,Instant.now())));
+        Ticket saved = ticketRepo.save(new Ticket(event, buyerEmail, Instant.now()));
+        events.publishEvent(new TicketPurchasedMessage(saved.id(), eventId, event.name(), buyerEmail));
+        return TicketResponseDTO.from(saved);
     }
 
     @Transactional

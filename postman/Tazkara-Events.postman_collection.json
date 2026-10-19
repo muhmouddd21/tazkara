@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Tazkara – Events API",
-    "description": "API contract for `EventsController` (`/api/v1/events`).\n\n## Authentication\nAll write endpoints require `Authorization: Bearer <JWT>`. Obtain a token via `POST /api/v1/auth/login` (see the *Auth helper* folder). The JWT carries a `plan` claim (`FREE` or `PRO`) that becomes the authority `PLAN_FREE` / `PLAN_PRO`.\n\n| Endpoint | Auth |\n|---|---|\n| `GET /api/v1/events` | public |\n| `GET /api/v1/events/{id}` | public |\n| `GET /api/v1/events/stats` | Bearer, `PLAN_PRO` only |\n| `POST /api/v1/events` | Bearer |\n| `PUT /api/v1/events/{id}` | Bearer, organizer only |\n| `DELETE /api/v1/events/{id}` | Bearer, organizer only |\n\n## Common error responses\nErrors use the Spring Boot default error body:\n```json\n{ \"timestamp\": \"...\", \"status\": 403, \"error\": \"Forbidden\", \"message\": \"...\", \"path\": \"/api/v1/events\" }\n```\n- `401 Unauthorized` – missing or invalid token (message: `missing or invalid token`).\n- `400 Bad Request` – request body fails validation.\n\n## Variables\n- `baseUrl` – e.g. `http://localhost:8080`\n- `token` – JWT, set automatically by the *Login* request.\n- `eventId` – id used by the `{id}` requests, set automatically by *Create event*.",
+    "description": "API contract for `EventsController` (`/api/v1/events`).\n\n## Authentication\nAll write endpoints require `Authorization: Bearer <JWT>`. Obtain a token via `POST /api/v1/auth/login` (see the *Auth helper* folder). The JWT carries a `plan` claim (`FREE` or `PRO`) that becomes the authority `PLAN_FREE` / `PLAN_PRO`.\n\n| Endpoint | Auth |\n|---|---|\n| `GET /api/v1/events` | public |\n| `GET /api/v1/events/{id}` | public |\n| `GET /api/v1/events/stats` | Bearer, `PLAN_PRO` only |\n| `POST /api/v1/events` | Bearer |\n| `PUT /api/v1/events/{id}` | Bearer, organizer only |\n| `DELETE /api/v1/events/{id}` | Bearer, organizer only |\n| `POST /api/v1/events/{id}/tickets` | Bearer |\n| `GET /api/v1/events/tickets` | Bearer (see note on request) |\n\n## Common error responses\nErrors use the Spring Boot default error body:\n```json\n{ \"timestamp\": \"...\", \"status\": 403, \"error\": \"Forbidden\", \"message\": \"...\", \"path\": \"/api/v1/events\" }\n```\n- `401 Unauthorized` – missing or invalid token (message: `missing or invalid token`).\n- `400 Bad Request` – request body fails validation.\n\n## Variables\n- `baseUrl` – e.g. `http://localhost:8080`\n- `token` – JWT, set automatically by the *Login* request.\n- `eventId` – id used by the `{id}` requests, set automatically by *Create event*.\n- `ticketId` – set automatically by *Purchase ticket*.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
@@ -15,7 +15,8 @@
     { "key": "token", "value": "", "type": "string" },
     { "key": "eventId", "value": "1", "type": "string" },
     { "key": "email", "value": "organizer@example.com", "type": "string" },
-    { "key": "password", "value": "password123", "type": "string" }
+    { "key": "password", "value": "password123", "type": "string" },
+    { "key": "ticketId", "value": "", "type": "string" }
   ],
   "item": [
     {
@@ -390,6 +391,157 @@
               "_postman_previewlanguage": "json",
               "header": [{ "key": "Content-Type", "value": "application/json" }],
               "body": "{\n  \"timestamp\": \"2026-10-01T10:00:00.000+00:00\",\n  \"status\": 403,\n  \"error\": \"Forbidden\",\n  \"path\": \"/api/v1/events/stats\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Tickets",
+      "description": "Ticket purchase and listing. Both routes live in `EventsController`.",
+      "item": [
+        {
+          "name": "Purchase ticket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set('ticketId', pm.response.json().id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/{{eventId}}/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "{{eventId}}",
+                "tickets"
+              ]
+            },
+            "description": "**Bearer.** Buys one ticket for the event as the logged-in user (buyer = JWT subject). No request body.\n\nThe event row is locked while seats are counted, so concurrent purchases can't oversell.\n\n### Path parameters\n| Name | Type | Notes |\n|---|---|---|\n| `id` | long | event id |\n\n### Responses\n- `201 Created` – `TicketResponseDTO`.\n- `401 Unauthorized` – missing or invalid token.\n- `404 Not Found` – `event not found`.\n- `409 Conflict` – `event is sold out`."
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/events/1/tickets"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"eventId\": 1,\n  \"eventName\": \"Jazz Night\",\n  \"buyerEmail\": \"organizer@example.com\",\n  \"purchasedAt\": \"2026-10-19T18:00:00Z\"\n}"
+            },
+            {
+              "name": "404 Not Found",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/events/999/tickets"
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"timestamp\": \"2026-10-19T18:00:00Z\",\n  \"status\": 404,\n  \"error\": \"Not Found\",\n  \"message\": \"event not found\",\n  \"path\": \"/api/v1/events/999/tickets\"\n}"
+            },
+            {
+              "name": "409 Sold out",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/events/1/tickets"
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"timestamp\": \"2026-10-19T18:00:00Z\",\n  \"status\": 409,\n  \"error\": \"Conflict\",\n  \"message\": \"event is sold out\",\n  \"path\": \"/api/v1/events/1/tickets\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "My tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('is an array', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/events/tickets",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "events",
+                "tickets"
+              ]
+            },
+            "description": "**Bearer.** Lists the logged-in user's tickets, newest first (matched by email, case-insensitive). No parameters.\n\n### Responses\n- `200 OK` – array of `TicketResponseDTO`.\n\n**Note:** `SecurityConfig` permits all `GET /api/v1/events/**`, so this route isn't protected by the filter chain. Without a token `authentication` is null and the call fails with `500` – always send the Bearer token."
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "originalRequest": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/events/tickets"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n{\n  \"id\": 1,\n  \"eventId\": 1,\n  \"eventName\": \"Jazz Night\",\n  \"buyerEmail\": \"organizer@example.com\",\n  \"purchasedAt\": \"2026-10-19T18:00:00Z\"\n}\n]"
             }
           ]
         }
