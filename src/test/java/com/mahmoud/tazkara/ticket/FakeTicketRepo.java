@@ -1,14 +1,17 @@
 package com.mahmoud.tazkara.ticket;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class FakeTicketRepo implements TicketRepo {
 
     private final Map<Long, Ticket> tickets = new HashMap<>();
     private final AtomicLong counter = new AtomicLong();
+    private final Set<Long> confirmdTickers = new HashSet<>();
 
     @Override
     public Ticket save(Ticket ticket) {
@@ -38,5 +41,16 @@ public class FakeTicketRepo implements TicketRepo {
                 .sorted((a, b) ->
                         b.purchasedAt().compareTo(a.purchasedAt()))
                 .toList();
+    }
+
+    @Override
+    public int markConfirmationSent(Long ticketId) {
+        if(this.confirmdTickers.contains(ticketId)){
+                return 0;
+        }else{
+                this.confirmdTickers.add(ticketId);
+                return 1;
+        }
+        
     }
 }
