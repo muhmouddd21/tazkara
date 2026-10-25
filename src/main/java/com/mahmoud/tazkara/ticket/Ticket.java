@@ -28,6 +28,16 @@ public class Ticket{
     @Column(nullable = false)
     private Instant purchasedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private TicketStatus status = TicketStatus.PURCHASED;
+
+    private Instant cancelledAt;
+
+    private Instant cancellationEmailSentAt;
+
+    @Column(length = 255)
+    private String cancelledBy;
 
     protected Ticket() {}
 
@@ -41,4 +51,21 @@ public class Ticket{
     public Event event() { return event; }
     public String buyerEmail() { return buyerEmail; }
     public Instant purchasedAt() { return purchasedAt; }
+
+    public TicketStatus status() {
+        return status;
+    }
+
+    public Instant cancelledAt() {
+        return cancelledAt;
+    }
+
+    public Instant cancellationEmailSentAt() {
+        return cancellationEmailSentAt;
+    }
+
+    public String cancelledBy() {
+        return cancelledBy;
+    }
+
 }

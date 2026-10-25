@@ -7,10 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import jakarta.validation.Valid;
-
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 
 @RestController 
@@ -27,13 +23,6 @@ public class TicketsController {
         String email = authentication.getName();
 
         return this.ticketsService.myTickets(email);
-    }
-    @PostMapping("/id")
-    public String cancelATicket(@RequestBody @Valid cancelRequestBody request,Authentication authentication) {
-
-        
-        request.id
-        return entity;
     }
     
 

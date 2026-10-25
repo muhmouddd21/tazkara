@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 import com.mahmoud.tazkara.event.Event;
 import com.mahmoud.tazkara.event.EventRepo;
@@ -20,6 +22,8 @@ public class TicketsService {
     private final EventRepo eventRepo;
     private final ApplicationEventPublisher events;
 
+    @PersistenceContext
+    private EntityManager entityManager;
 
     public TicketsService(TicketRepo ticketRepo, EventRepo eventRepo,ApplicationEventPublisher events) {
         this.ticketRepo = ticketRepo;
@@ -49,7 +53,7 @@ public class TicketsService {
     }
 
     @Transactional 
-    public boolean cancel(String requesterEmail, Long ticketId, Long eventId){
+    public CancelResponseDTO cancel(String requesterEmail, Long ticketId, Long eventId){
         Event event = this.eventRepo.findWithLockById(eventId)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
         
@@ -67,7 +71,38 @@ public class TicketsService {
                 HttpStatus.BAD_REQUEST, "Ticket does not belong to this event"
             );
         }
-        
+
+        Instant cancelledAt = Instant.now();
+
+        int updated = ticketRepo.cancelTicket(
+            ticketId, requesterEmail, cancelledAt
+        );
+    
+        if (updated == 0) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Ticket is already cancelled or cannot be cancelled"
+            );
+        }
+    
+        entityManager.refresh(ticket);
+    
+        events.publishEvent(new TicketCancelledMessage(
+            ticket.id(),
+            event.id(),
+            event.name(),
+            ticket.buyerEmail(),
+            ticket.cancelledBy(),
+            ticket.cancelledAt()
+        ));
+    
+        return new CancelResponseDTO(
+            ticket.id(),
+            event.id(),
+            ticket.status(),
+            ticket.cancelledAt(),
+            ticket.cancelledBy()
+        );
 
     }
 }

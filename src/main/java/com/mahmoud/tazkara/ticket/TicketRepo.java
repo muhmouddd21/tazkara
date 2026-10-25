@@ -1,5 +1,6 @@
 package com.mahmoud.tazkara.ticket;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,4 +23,21 @@ public interface TicketRepo extends Repository<Ticket,Long> {
         WHERE id = :ticketId AND confirmation_sent_at IS NULL
         """, nativeQuery = true)
     int markConfirmationSent(@Param("ticketId") Long ticketId);
+
+    
+    @Modifying
+    @Query(value = """
+        UPDATE tickets
+        SET status = 'CANCELLED',
+            cancelled_at = :cancelledAt,
+            cancelled_by = :cancelledBy
+        WHERE id = :ticketId
+          AND status = 'PURCHASED'
+        """, nativeQuery = true)
+    int cancelTicket(
+        @Param("ticketId") Long ticketId,
+        @Param("cancelledBy") String cancelledBy,
+        @Param("cancelledAt") Instant cancelledAt
+    );
+
 }
