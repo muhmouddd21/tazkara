@@ -1,6 +1,7 @@
 package com.mahmoud.tazkara.ticket;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,7 +15,7 @@ public interface TicketRepo extends Repository<Ticket,Long> {
 
     List<Ticket> findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(String buyerEmail);
 
-
+    Optional<Ticket> findById(Long id);
     @Modifying 
     @Query (value = """
         UPDATE tickets SET confirmation_sent_at = now()

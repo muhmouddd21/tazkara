@@ -47,4 +47,27 @@ public class TicketsService {
         return ticketRepo.findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(buyerEmail)
                 .stream().map(TicketResponseDTO::from).toList();
     }
+
+    @Transactional 
+    public boolean cancel(String requesterEmail, Long ticketId, Long eventId){
+        Event event = this.eventRepo.findWithLockById(eventId)
+        .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
+        
+        Ticket ticket =this.ticketRepo.findById(ticketId)
+                    .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"ticket not found"));
+
+        if (!event.organizerEmail().equalsIgnoreCase(requesterEmail) && !ticket.buyerEmail().equalsIgnoreCase(requesterEmail)) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "You are not allowed to do this"
+            );
+        }
+
+        if (!ticket.event().id().equals(eventId)) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "Ticket does not belong to this event"
+            );
+        }
+        
+
+    }
 }

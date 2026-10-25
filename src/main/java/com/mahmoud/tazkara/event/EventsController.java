@@ -120,12 +120,7 @@ public class EventsController {
                 .body(ticket);
     }
 
-    @GetMapping("/tickets")
-    public List<TicketResponseDTO> getTicjets(Authentication authentication) {
-        String email = authentication.getName();
 
-        return this.ticketsService.myTickets(email);
-    }
     
     
 }
