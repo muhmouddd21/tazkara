@@ -37,7 +37,8 @@ import static org.mockito.Mockito.after;
     "spring.rabbitmq.listener.simple.retry.enabled=true",
     "spring.rabbitmq.listener.simple.retry.max-retries=2",          // 3 attempts in total
     "spring.rabbitmq.listener.simple.retry.initial-interval=100ms", // fast for tests
-    "spring.rabbitmq.listener.simple.retry.multiplier=2"
+    "spring.rabbitmq.listener.simple.retry.multiplier=2",
+    "tazkara.messaging.rabbit-enabled=true"
 })
 @ActiveProfiles("test")
 public class ConfirmationReliabilityTest {

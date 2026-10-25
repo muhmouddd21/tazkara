@@ -23,7 +23,11 @@ import com.mahmoud.tazkara.event.EventRepo;
 
 
 @Testcontainers 
-@SpringBootTest(properties = "spring.rabbitmq.listener.simple.auto-startup=true")
+@SpringBootTest(properties = {
+    "spring.rabbitmq.listener.simple.auto-startup=true",
+    "tazkara.messaging.rabbit-enabled=true"
+}
+)
 @ActiveProfiles("test")
 public class TicketConfirmationFlowTest {
     @Container 
