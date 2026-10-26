@@ -37,7 +37,11 @@ public class TicketsService {
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
         
 
-        long sold = ticketRepo.countByEventId(eventId);          
+        long sold = ticketRepo.countByEventIdAndStatus(
+            eventId,
+            TicketStatus.PURCHASED
+        );
+                 
         if (sold >= event.totalSeats()) {                       
             throw new ResponseStatusException(HttpStatus.CONFLICT, "event is sold out");
         }

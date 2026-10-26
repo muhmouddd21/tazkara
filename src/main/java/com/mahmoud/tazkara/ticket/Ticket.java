@@ -32,6 +32,8 @@ public class Ticket{
     @Column(nullable = false, length = 20)
     private TicketStatus status = TicketStatus.PURCHASED;
 
+    private Instant confirmation_sent_at;
+
     private Instant cancelledAt;
 
     private Instant cancellationEmailSentAt;
@@ -51,6 +53,9 @@ public class Ticket{
     public Event event() { return event; }
     public String buyerEmail() { return buyerEmail; }
     public Instant purchasedAt() { return purchasedAt; }
+    public Instant confirmation_sent_at() {
+        return confirmation_sent_at;
+    }
 
     public TicketStatus status() {
         return status;
@@ -66,6 +71,18 @@ public class Ticket{
 
     public String cancelledBy() {
         return cancelledBy;
+    }
+
+    public void cancel(String cancelledBy, Instant cancelledAt) {
+        if (this.status != TicketStatus.PURCHASED) {
+            throw new IllegalStateException(
+                    "Only purchased tickets can be cancelled"
+            );
+        }
+    
+        this.status = TicketStatus.CANCELLED;
+        this.cancelledBy = cancelledBy;
+        this.cancelledAt = cancelledAt;
     }
 
 }

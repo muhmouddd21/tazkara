@@ -86,7 +86,7 @@ public class TicketsControllerTest {
 
         // 5. Get my tickets
         mockMvc.perform(
-                get("/api/v1/events/tickets")
+                get("/api/v1/tickets")
                         .header("Authorization", "Bearer " + token)
         )
         .andExpect(status().isOk())

@@ -13,7 +13,7 @@ public interface TicketRepo extends Repository<Ticket,Long> {
     Ticket save(Ticket ticket);
 
     long countByEventId(Long eventId);
-
+    long countByEventIdAndStatus(Long eventId, TicketStatus status);
     List<Ticket> findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(String buyerEmail);
 
     Optional<Ticket> findById(Long id);
@@ -23,6 +23,15 @@ public interface TicketRepo extends Repository<Ticket,Long> {
         WHERE id = :ticketId AND confirmation_sent_at IS NULL
         """, nativeQuery = true)
     int markConfirmationSent(@Param("ticketId") Long ticketId);
+
+    @Modifying 
+    @Query (value ="""
+           UPDATE tickets SET cancellation_email_sent_at = now()
+        WHERE id = :ticketId AND cancellation_email_sent_at IS NULL
+            
+            """,nativeQuery =true)
+    int markCancellationSent(@Param("ticketId") Long ticketId);
+
 
     
     @Modifying

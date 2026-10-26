@@ -60,7 +60,7 @@ public class OversellingTest {
         pool.shutdown();
         pool.awaitTermination(30, TimeUnit.SECONDS);
 
-        assertThat(ticketRepo.countByEventId(event.id())).isEqualTo(5);
+        assertThat(ticketRepo.countByEventIdAndStatus(event.id(),TicketStatus.PURCHASED)).isEqualTo(5);
     }
 
 

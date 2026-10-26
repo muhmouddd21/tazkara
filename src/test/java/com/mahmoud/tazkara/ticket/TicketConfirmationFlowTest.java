@@ -68,7 +68,7 @@ public class TicketConfirmationFlowTest {
             status.setRollbackOnly();                  
         });
 
-        assertThat(ticketRepo.countByEventId(event.id())).isZero();   // the ticket never existed
+        assertThat(ticketRepo.countByEventIdAndStatus(event.id(),TicketStatus.PURCHASED )).isZero();   // the ticket never existed
         verify(confirmationSender, after(2000).never())
             .send(argThat(m -> m.buyerEmail().equals("ghost@test.dev")));
     }
