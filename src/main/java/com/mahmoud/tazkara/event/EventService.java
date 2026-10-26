@@ -1,6 +1,5 @@
 package com.mahmoud.tazkara.event;
 
-import java.util.Optional;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

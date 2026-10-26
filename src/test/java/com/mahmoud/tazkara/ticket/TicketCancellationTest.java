@@ -119,5 +119,69 @@ public class TicketCancellationTest {
         ).isEqualTo(0);
     }
 
+    @Test
+    void organizerCancelsTicketAndBuyerReceivesCancellationEmail() {
+        // 1. Create an event owned by the organizer
+        String organizerEmail = "org@test.dev";
+        String buyerEmail = "buyer@test.dev";
+
+        Event event = eventRepo.save(
+            new Event(
+                null,
+                organizerEmail,
+                "The Finale",
+                "Cairo",
+                "music",
+                5
+            )
+        );
+
+        // 2. Buyer purchases a ticket
+        ticketsService.purchase(buyerEmail, event.id());
+
+        Ticket ticket = ticketRepo
+            .findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(buyerEmail)
+            .stream()
+            .findFirst()
+            .orElseThrow();
+
+        Long ticketId = ticket.id();
+
+        // 3. Wait for the purchase confirmation to be processed
+        await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+            Ticket fresh = ticketRepo.findById(ticketId).orElseThrow();
+            assertThat(fresh.confirmation_sent_at()).isNotNull();
+        });
+
+        // 4. Organizer cancels the ticket
+        ticketsService.cancel(organizerEmail, ticketId, event.id());
+
+        // 5. Verify cancellation details
+        Ticket cancelledTicket = ticketRepo.findById(ticketId).orElseThrow();
+
+        assertThat(cancelledTicket.status())
+            .isEqualTo(TicketStatus.CANCELLED);
+
+        assertThat(cancelledTicket.cancelledAt()).isNotNull();
+
+        assertThat(cancelledTicket.cancelledBy())
+            .isEqualTo(organizerEmail);
+
+        // 6. Wait until the cancellation email is processed
+        await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+            Ticket fresh = ticketRepo.findById(ticketId).orElseThrow();
+
+            assertThat(fresh.cancellationEmailSentAt()).isNotNull();
+        });
+
+        // 7. Verify the ticket no longer occupies a seat
+        assertThat(
+            ticketRepo.countByEventIdAndStatus(
+                event.id(),
+                TicketStatus.PURCHASED
+            )
+        ).isZero();
+    }
+
 
 }
