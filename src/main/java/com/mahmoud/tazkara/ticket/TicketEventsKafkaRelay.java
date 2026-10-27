@@ -34,4 +34,17 @@ public class TicketEventsKafkaRelay {
             log.warn("ticket {} event not published to Kafka", message.ticketId(), e);
         }
     }
+    @TransactionalEventListener 
+    void publishCancelEvent(TicketCancelledMessage message) {
+        String key = String.valueOf(message.eventId());
+
+        try {
+            kafka.send(KafkaConfig.TICKET_EVENTS_TOPIC,key,message)
+            .whenComplete((result, ex) -> {
+                if (ex != null) log.warn("ticket {} event not published to Kafka", message.ticketId(), ex);
+            });
+        } catch (Exception e) {
+            log.warn("ticket {} event not published to Kafka", message.ticketId(), e);
+        }
+    }
 }

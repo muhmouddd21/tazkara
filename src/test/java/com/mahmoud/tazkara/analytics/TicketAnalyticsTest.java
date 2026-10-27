@@ -3,6 +3,7 @@ package com.mahmoud.tazkara.analytics;
 import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
+import java.time.Instant;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,6 +89,21 @@ public class TicketAnalyticsTest {
 
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(processed(second.id())).isTrue());
         assertThat(ticketsSold(event.id())).isEqualTo(2L);         // not 3
+    }
+
+    @Test 
+    void threeSalesAndCancelledBecomeACountOfTwo() {
+        Event event = eventRepo.save(new Event(null, "org@test.dev", "Stream Night", "Cairo", "music", 10,Instant.now().plus(Duration.ofDays(10)),Instant.now().plus(Duration.ofDays(12))));
+
+        ticketsService.purchase("a@test.dev", event.id());
+        ticketsService.purchase("b@test.dev", event.id());
+        TicketResponseDTO ticketC = ticketsService.purchase("c@test.dev", event.id());
+
+
+        ticketsService.cancel("c@test.dev", ticketC.id(), event.id());
+
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
+            assertThat(ticketsSold(event.id())).isEqualTo(2L));
     }
 
 }
