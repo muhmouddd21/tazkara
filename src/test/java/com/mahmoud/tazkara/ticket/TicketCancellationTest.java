@@ -122,6 +122,11 @@ public class TicketCancellationTest {
                 TicketStatus.PURCHASED
             )
         ).isEqualTo(0);
+
+
+        Event updatedEvent = eventRepo.findById(event.id()).orElseThrow();
+
+        assertThat(updatedEvent.totalSeats()).isEqualTo(5);
     }
 
     @Test
