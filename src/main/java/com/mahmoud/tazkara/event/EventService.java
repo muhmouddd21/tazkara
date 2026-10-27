@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.mahmoud.tazkara.ticket.TicketRepo;
+import com.mahmoud.tazkara.ticket.TicketStatus;
 
 
 @Service 
@@ -130,10 +131,10 @@ public class EventService {
 
     @Cacheable(cacheNames = "stats", key = "'event-stats'")
     public EventStats stats() {
-        long count = eventRepo.count();
-        long seats = eventRepo.sumTotalSeats();
-    
-        return new EventStats(count, seats);
+        Long count = eventRepo.count();
+        Long seats = eventRepo.sumTotalSeats();
+        Long cancellations =ticketrepo.countByStatus(TicketStatus.CANCELLED);
+        return new EventStats(count, seats,cancellations);
     }
 
 

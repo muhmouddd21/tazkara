@@ -12,8 +12,11 @@ import org.springframework.data.repository.query.Param;
 public interface TicketRepo extends Repository<Ticket,Long> {
     Ticket save(Ticket ticket);
 
-    long countByEventId(Long eventId);
-    long countByEventIdAndStatus(Long eventId, TicketStatus status);
+    Long countByEventId(Long eventId);
+    Long countByEventIdAndStatus(Long eventId, TicketStatus status);
+
+    Long countByStatus(TicketStatus status);
+
     List<Ticket> findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(String buyerEmail);
 
     Optional<Ticket> findById(Long id);
@@ -48,5 +51,7 @@ public interface TicketRepo extends Repository<Ticket,Long> {
         @Param("cancelledBy") String cancelledBy,
         @Param("cancelledAt") Instant cancelledAt
     );
+
+
 
 }

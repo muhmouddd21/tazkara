@@ -51,7 +51,7 @@ public class FakeTicketRepo implements TicketRepo {
         
     }
         @Override
-        public long countByEventIdAndStatus(Long eventId, TicketStatus status) {
+        public Long countByEventIdAndStatus(Long eventId, TicketStatus status) {
         return tickets.values().stream()
                 .filter(ticket -> ticket.event().id().equals(eventId))
                 .filter(ticket -> ticket.status() == status)
@@ -95,9 +95,17 @@ public class FakeTicketRepo implements TicketRepo {
 
 
         @Override
-        public long countByEventId(Long eventId) {
+        public Long countByEventId(Long eventId) {
             return tickets.values().stream()
                     .filter(ticket -> ticket.event().id().equals(eventId))
                     .count();
+        }
+
+
+        @Override
+        public Long countByStatus(TicketStatus status) {
+            return tickets.values().stream()
+                .filter(ticket -> ticket.status() == TicketStatus.CANCELLED)
+                .count();
         }
 }
