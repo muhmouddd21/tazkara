@@ -286,4 +286,97 @@ public class TicketCancellationTest {
             )
         ).isZero();
     }
+
+
+
+    @Test
+    void cancellingAlreadyCancelledTicketHasNoAdditionalEffects() {
+
+        String organizerEmail = "org@test.dev";
+        String buyerEmail = "buyer@test.dev";
+
+        Event event = eventRepo.save(
+            new Event(
+                null,
+                organizerEmail,
+                "AC3 Event",
+                "Cairo",
+                "music",
+                5
+            )
+        );
+
+        ticketsService.purchase(buyerEmail, event.id());
+
+        Ticket ticket = ticketRepo
+            .findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(buyerEmail)
+            .stream()
+            .findFirst()
+            .orElseThrow();
+
+        Long ticketId = ticket.id();
+
+        // Wait for the purchase confirmation
+        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
+            assertThat(
+                ticketRepo.findById(ticketId)
+                    .orElseThrow()
+                    .confirmation_sent_at()
+            ).isNotNull()
+        );
+
+        // First cancellation
+        ticketsService.cancel(organizerEmail, ticketId, event.id());
+
+        // Wait for the cancellation email to be processed
+        await().atMost(Duration.ofSeconds(20)).untilAsserted(() ->
+            assertThat(
+                ticketRepo.findById(ticketId)
+                    .orElseThrow()
+                    .cancellationEmailSentAt()
+            ).isNotNull()
+        );
+
+        Ticket beforeRetry = ticketRepo.findById(ticketId).orElseThrow();
+
+        var cancelledAtBefore = beforeRetry.cancelledAt();
+        var cancellationEmailSentAtBefore =
+            beforeRetry.cancellationEmailSentAt();
+
+        long purchasedCountBefore =
+            ticketRepo.countByEventIdAndStatus(
+                event.id(), TicketStatus.PURCHASED
+            );
+
+        long cancelledCountBefore =
+            ticketRepo.countByEventIdAndStatus(
+                event.id(), TicketStatus.CANCELLED
+            );
+
+        // Second cancellation must be rejected
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+            ticketsService.cancel(organizerEmail, ticketId, event.id())
+        ).isInstanceOf(RuntimeException.class);
+
+        // Verify that the retry changed nothing
+        Ticket afterRetry = ticketRepo.findById(ticketId).orElseThrow();
+
+        assertThat(afterRetry.status()).isEqualTo(TicketStatus.CANCELLED);
+        assertThat(afterRetry.cancelledAt()).isEqualTo(cancelledAtBefore);
+        assertThat(afterRetry.cancellationEmailSentAt())
+            .isEqualTo(cancellationEmailSentAtBefore);
+
+        assertThat(
+            ticketRepo.countByEventIdAndStatus(
+                event.id(), TicketStatus.PURCHASED
+            )
+        ).isEqualTo(purchasedCountBefore);
+
+        assertThat(
+            ticketRepo.countByEventIdAndStatus(
+                event.id(), TicketStatus.CANCELLED
+            )
+        ).isEqualTo(cancelledCountBefore);
+    }
+
 }
