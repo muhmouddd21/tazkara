@@ -20,6 +20,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Testcontainers 
 @SpringBootTest(properties = {
@@ -129,7 +134,7 @@ public class TicketCancellationTest {
             new Event(
                 null,
                 organizerEmail,
-                "The Finale",
+                "The Finalee",
                 "Cairo",
                 "music",
                 5
@@ -184,4 +189,101 @@ public class TicketCancellationTest {
     }
 
 
+
+    @Test
+    void twoOrganizersCannotCancelTheSameTicketTwice() throws Exception {
+
+        String organizerEmail = "org@test.dev";
+        String buyerEmail = "buyer@test.dev";
+
+        Event event = eventRepo.save(
+            new Event(
+                null,
+                organizerEmail,
+                "The Finaleee",
+                "Cairo",
+                "music",
+                5
+            )
+        );
+
+        // 1. Buyer purchases one ticket
+        ticketsService.purchase(buyerEmail, event.id());
+
+        Ticket ticket = ticketRepo
+            .findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(buyerEmail)
+            .stream()
+            .findFirst()
+            .orElseThrow();
+
+        Long ticketId = ticket.id();
+
+        // 2. Prepare two competing cancellation requests
+        int workers = 2;
+
+        ExecutorService pool = Executors.newFixedThreadPool(workers);
+        CountDownLatch ready = new CountDownLatch(workers);
+        CountDownLatch startGun = new CountDownLatch(1);
+
+        AtomicInteger successfulCancellations = new AtomicInteger();
+        AtomicInteger rejectedCancellations = new AtomicInteger();
+
+        try {
+            for (int i = 0; i < workers; i++) {
+                pool.submit(() -> {
+                    ready.countDown();
+
+                    try {
+                        startGun.await();
+
+                        ticketsService.cancel(
+                            organizerEmail,
+                            ticketId,
+                            event.id()
+                        );
+
+                        successfulCancellations.incrementAndGet();
+
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (RuntimeException e) {
+                        // Assumes a repeated cancellation is rejected
+                        rejectedCancellations.incrementAndGet();
+                    }
+                });
+            }
+
+            // 3. Wait until both threads are ready
+            assertThat(ready.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // 4. Release both threads together
+            startGun.countDown();
+
+            pool.shutdown();
+
+            assertThat(pool.awaitTermination(30, TimeUnit.SECONDS))
+                .isTrue();
+
+        } finally {
+            pool.shutdownNow();
+        }
+
+        // 5. Exactly one cancellation should succeed
+        assertThat(successfulCancellations.get()).isEqualTo(1);
+        assertThat(rejectedCancellations.get()).isEqualTo(1);
+
+        // 6. Verify the final database state
+        Ticket cancelled = ticketRepo.findById(ticketId).orElseThrow();
+
+        assertThat(cancelled.status()).isEqualTo(TicketStatus.CANCELLED);
+        assertThat(cancelled.cancelledAt()).isNotNull();
+        assertThat(cancelled.cancelledBy()).isEqualTo(organizerEmail);
+
+        assertThat(
+            ticketRepo.countByEventIdAndStatus(
+                event.id(),
+                TicketStatus.PURCHASED
+            )
+        ).isZero();
+    }
 }
