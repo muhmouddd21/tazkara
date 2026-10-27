@@ -38,6 +38,12 @@ public class Event {
     @Column(insertable = false, updatable = false)
     private Instant updatedAt;  
 
+    @Column(nullable = false)
+    private Instant startAt;
+
+    @Column(nullable = false)
+    private Instant endAt;
+
     protected Event() {} 
 
     public Event(Long id, String organizerEmail, String name,
@@ -50,6 +56,18 @@ public class Event {
         this.totalSeats = totalSeats;
         }
 
+        public Event(Long id, String organizerEmail, String name,
+            String city, String category, int totalSeats, Instant startAt,Instant endAt) {
+            this.id = id;
+            this.organizerEmail = organizerEmail;
+            this.name = name;
+            this.city = city;
+            this.category = category;
+            this.totalSeats = totalSeats;
+            this.startAt =startAt;
+            this.endAt =endAt;
+            }
+
 
     public Long id() { return id; }
     public String organizerEmail() { return organizerEmail; }
@@ -59,6 +77,8 @@ public class Event {
     public int totalSeats() { return totalSeats; }
     public Instant createdAt(){return createdAt;}
     public Instant updatedAt(){return updatedAt;}
+    public Instant startAt(){return startAt;}
+    public Instant endAt(){return endAt;}
     public long version() { return version; }
 
     public void applyEdit(String name, String city, String category, int totalSeats) {

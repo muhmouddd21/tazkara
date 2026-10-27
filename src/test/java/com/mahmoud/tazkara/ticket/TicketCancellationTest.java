@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.server.ResponseStatusException;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -17,9 +18,11 @@ import com.mahmoud.tazkara.event.EventRepo;
 import jakarta.persistence.EntityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -382,6 +385,61 @@ public class TicketCancellationTest {
                 event.id(), TicketStatus.CANCELLED
             )
         ).isEqualTo(cancelledCountBefore);
+    }
+
+
+    @Test
+    void cancelTicketLessThan48HoursBeforeStart() {
+    
+        String organizerEmail = "org@test.dev";
+        String buyerEmail = "buyer-48h@test.dev";
+    
+        Event event = new Event(
+            null,
+            organizerEmail,
+            "48 Hour Cancellation Test",
+            "Cairo",
+            "music",
+            5,
+            Instant.now().plus(Duration.ofHours(24)),
+            Instant.now().plus(Duration.ofHours(26))
+        );
+    
+        Event eventAdded = eventRepo.save(event);
+    
+        ticketsService.purchase(buyerEmail, eventAdded.id());
+    
+        Ticket ticket = ticketRepo
+            .findByBuyerEmailIgnoreCaseOrderByPurchasedAtDesc(buyerEmail)
+            .stream()
+            .findFirst()
+            .orElseThrow();
+    
+        Long ticketId = ticket.id();
+    
+        assertThatThrownBy(() ->
+            ticketsService.cancel(
+                organizerEmail,
+                ticketId,
+                eventAdded.id()
+            )
+        )
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("less than 48 hours");
+    
+        Ticket unchangedTicket = ticketRepo.findById(ticketId).orElseThrow();
+    
+        assertThat(unchangedTicket.status())
+            .isEqualTo(TicketStatus.PURCHASED);
+    
+        assertThat(unchangedTicket.cancelledAt()).isNull();
+    
+        assertThat(
+            ticketRepo.countByEventIdAndStatus(
+                eventAdded.id(),
+                TicketStatus.PURCHASED
+            )
+        ).isEqualTo(1);
     }
 
 }
