@@ -14,6 +14,9 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 
 import com.jayway.jsonpath.JsonPath;
 
+import java.time.Duration;
+import java.time.Instant;
+
 
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -118,6 +121,8 @@ public class EventsControllerTest {
                 .andExpect(status().isForbidden());
     }   
 
+    private static final Instant START_AT = Instant.now().plus(Duration.ofDays(30));
+
     @Test
     void endBeforeStartIsRejectedWithBadRequest() throws Exception {      // B8
         String token = registerAndLogin("backwards@tazkara.dev");
@@ -127,7 +132,7 @@ public class EventsControllerTest {
                 .contentType("application/json")
                 .content("""
                         {"name":"Backwards Gig","city":"Cairo","category":"music","totalSeats":10,
-                         "startAt":"2027-06-01T21:00:00Z","endAt":"2027-06-01T18:00:00Z"}"""))
+                         "startAt":"%s","endAt":"%s"}""".formatted(START_AT, START_AT.minus(Duration.ofHours(3)))))
                 .andExpect(status().isBadRequest());
     }
 
@@ -137,7 +142,7 @@ public class EventsControllerTest {
                 .contentType("application/json")
                 .content("""
                         {"name":"%s","city":"Cairo","category":"music","totalSeats":%d,
-                         "startAt":"2027-06-01T18:00:00Z","endAt":"2027-06-01T21:00:00Z"}""".formatted(name, seats)))
+                         "startAt":"%s","endAt":"%s"}""".formatted(name, seats, START_AT, START_AT.plus(Duration.ofHours(3)))))
                 .andExpect(status().isCreated())
                 .andReturn();
         return ((Integer) JsonPath.read(result.getResponse().getContentAsString(), "$.id")).longValue();
