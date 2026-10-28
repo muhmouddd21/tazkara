@@ -3,6 +3,9 @@ package com.mahmoud.tazkara.event;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.util.Optional;
+
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -135,6 +138,26 @@ public class EventService {
         Long seats = eventRepo.sumTotalSeats();
         Long cancellations =ticketrepo.countByStatus(TicketStatus.CANCELLED);
         return new EventStats(count, seats,cancellations);
+    }
+
+    public NumberOfSeatsDTO AvailableSeats(Long eventId){
+        Event event = eventRepo.findById(eventId)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Event not found"
+        ));
+
+        Long sold = ticketrepo.countByEventIdAndStatus(
+            eventId,
+            TicketStatus.PURCHASED
+        );
+
+        return new NumberOfSeatsDTO(
+            eventId,
+            event.name(),
+            event.totalSeats() - sold
+        );
+
     }
 
 

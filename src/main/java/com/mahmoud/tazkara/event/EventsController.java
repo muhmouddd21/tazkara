@@ -127,6 +127,11 @@ public class EventsController {
         return ResponseEntity.ok(ticket);
     }
 
+    @GetMapping("/{eventId}/availableseats")
+    public NumberOfSeatsDTO getNumbersOfAvailableSeats(@PathVariable Long eventId) {
+        return eventService.AvailableSeats(eventId);
+    }
+    
 
     
     
