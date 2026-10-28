@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class TicketsService {
     }
 
     @Transactional 
+    @CacheEvict (cacheNames = "stats",key = "'event-stats'")
     public TicketResponseDTO purchase(String buyerEmail,Long eventId){
         Event event = this.eventRepo.findWithLockById(eventId)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
@@ -58,6 +60,7 @@ public class TicketsService {
     }
 
     @Transactional 
+    @CacheEvict (cacheNames = "stats",key = "'event-stats'")
     public CancelResponseDTO cancel(String requesterEmail, Long ticketId, Long eventId){
         Event event = this.eventRepo.findWithLockById(eventId)
         .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
