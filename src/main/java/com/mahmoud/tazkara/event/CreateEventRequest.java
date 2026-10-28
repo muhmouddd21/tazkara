@@ -2,6 +2,7 @@ package com.mahmoud.tazkara.event;
 
 import java.time.Instant;
 
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -28,4 +29,9 @@ public record CreateEventRequest(
     @NotNull(message = "End date and time is required")
     @Future(message = "End date and time must be in the future")
     Instant endAt
-) {}
+) {
+    @AssertTrue(message = "End date and time must be after start date and time")
+    public boolean isEndAfterStart() {
+        return startAt == null || endAt == null || endAt.isAfter(startAt);
+    }
+}

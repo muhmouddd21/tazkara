@@ -118,5 +118,63 @@ public class EventsControllerTest {
                 .andExpect(status().isForbidden());
     }   
 
+    @Test
+    void endBeforeStartIsRejectedWithBadRequest() throws Exception {      // B8
+        String token = registerAndLogin("backwards@tazkara.dev");
+
+        mockMvc.perform(post("/api/v1/events")
+                .header("Authorization", "Bearer " + token)
+                .contentType("application/json")
+                .content("""
+                        {"name":"Backwards Gig","city":"Cairo","category":"music","totalSeats":10,
+                         "startAt":"2027-06-01T21:00:00Z","endAt":"2027-06-01T18:00:00Z"}"""))
+                .andExpect(status().isBadRequest());
+    }
+
+    private Long createEventWithSeats(String token, String name, int seats) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/v1/events")
+                .header("Authorization", "Bearer " + token)
+                .contentType("application/json")
+                .content("""
+                        {"name":"%s","city":"Cairo","category":"music","totalSeats":%d,
+                         "startAt":"2027-06-01T18:00:00Z","endAt":"2027-06-01T21:00:00Z"}""".formatted(name, seats)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return ((Integer) JsonPath.read(result.getResponse().getContentAsString(), "$.id")).longValue();
+    }
+
+    @Test
+    void seatsLeftDropsOnPurchaseAndComesBackOnCancel() throws Exception {
+        String token = registerAndLogin("seats@tazkara.dev");
+        Long eventId = createEventWithSeats(token, "One Seat Show", 1);
+
+        mockMvc.perform(get("/api/v1/events/{id}/availableseats", eventId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.numberOfAvailableSeats").value(1));
+
+        MvcResult ticket = mockMvc.perform(post("/api/v1/events/{id}/tickets", eventId)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andReturn();
+        Integer ticketId = JsonPath.read(ticket.getResponse().getContentAsString(), "$.id");
+
+        mockMvc.perform(get("/api/v1/events/{id}/availableseats", eventId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.numberOfAvailableSeats").value(0));
+
+        mockMvc.perform(patch("/api/v1/events/{eventId}/tickets/{ticketId}/cancellation", eventId, ticketId)
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/events/{id}/availableseats", eventId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.numberOfAvailableSeats").value(1));
+    }
+
+    @Test
+    void seatsLeftForUnknownEventIsNotFound() throws Exception {
+        mockMvc.perform(get("/api/v1/events/{id}/availableseats", 999_999))
+                .andExpect(status().isNotFound());
+    }
 
 }

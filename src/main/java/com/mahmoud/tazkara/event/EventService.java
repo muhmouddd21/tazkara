@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -25,6 +26,7 @@ public class EventService {
     private final EventRepo eventRepo;
     private final TicketRepo ticketrepo;
     private static final int FREE_PLAN_EVENT_LIMIT = 3;
+    private static final String UNIQUE_NAME_CITY = "uq_events_name_city";
 
     public EventService(EventRepo repo,TicketRepo ticketrepo){
         this.eventRepo=repo;
@@ -70,8 +72,16 @@ public class EventService {
             return EventResponseDTO.from(eventRepo.save(event));
 
         } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"an event named '" + request.name() + "' already exists in " + request.city());
+            if (violates(e, UNIQUE_NAME_CITY)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,"an event named '" + request.name() + "' already exists in " + request.city());
+            }
+            throw e;
         }
+    }
+
+    private static boolean violates(DataIntegrityViolationException e, String constraintName) {
+        return e.getCause() instanceof ConstraintViolationException cve
+                && constraintName.equalsIgnoreCase(cve.getConstraintName());
     }
 
     @Transactional
