@@ -8,4 +8,6 @@ WHERE end_at IS NULL;
 
 ALTER TABLE events
     ALTER COLUMN start_at SET NOT NULL,
-    ALTER COLUMN end_at SET NOT NULL;
+    ALTER COLUMN end_at SET NOT NULL,
+    ADD CONSTRAINT chk_events_end_after_start
+        CHECK (end_at > start_at);
