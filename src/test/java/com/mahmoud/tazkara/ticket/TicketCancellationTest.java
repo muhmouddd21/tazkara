@@ -4,7 +4,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.server.ResponseStatusException;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -12,6 +16,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.rabbitmq.RabbitMQContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import com.jayway.jsonpath.JsonPath;
 import com.mahmoud.tazkara.event.Event;
 import com.mahmoud.tazkara.event.EventRepo;
 
@@ -29,20 +34,29 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
 @Testcontainers 
 @SpringBootTest(properties = {
     "tazkara.messaging.rabbit-enabled=true",
     "spring.rabbitmq.listener.simple.auto-startup=true"
 })
 @ActiveProfiles("test")
+@AutoConfigureMockMvc 
 public class TicketCancellationTest {
 
     @Autowired TicketsService ticketsService;
     @Autowired EventRepo eventRepo;
     @Autowired TicketRepo ticketRepo;
+    @Autowired JdbcTemplate jdbc;
 
     @Autowired
     EntityManager entityManager;
+
+    @Autowired 
+    MockMvc mockMvc;
     
     @Container 
     @ServiceConnection 
@@ -56,6 +70,24 @@ public class TicketCancellationTest {
             new RabbitMQContainer(
                     DockerImageName.parse("rabbitmq:4-management")
     );
+
+
+    private String registerAndLogin(String email) throws Exception {
+        String credentials = """
+                {"email":"%s","password":"correct-horse-battery"}""".formatted(email);
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType("application/json").content(credentials));
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
+                .contentType("application/json").content(credentials)).andReturn();
+        return JsonPath.read(result.getResponse().getContentAsString(), "$.token");
+    }
+
+    private Long ticketsSold(Long eventId) {
+        return jdbc.query("SELECT tickets_sold FROM analytics_event_sales WHERE event_id = ?",
+         rs -> rs.next() ? rs.getLong(1) : 0L, eventId);
+    }
+
+
 
 
     @Test 
@@ -442,4 +474,71 @@ public class TicketCancellationTest {
         ).isEqualTo(1);
     }
 
+
+    @Test 
+    void fullCycleOfCancellation() throws Exception{
+        String token = registerAndLogin("canceller@tazkara.dev");
+        // 2. Create an event
+        String eventJson = """
+            {
+                "name": "Cancellation Test",
+                "city": "Cairo",
+                "category": "music",
+                "totalSeats": 10
+            }
+            """;
+
+        MvcResult eventResult = mockMvc.perform(
+                post("/api/v1/events")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType("application/json")
+                    .content(eventJson)
+            )
+            .andExpect(status().isCreated())
+            .andReturn();
+
+        Integer eventIdValue = JsonPath.read(
+            eventResult.getResponse().getContentAsString(),
+            "$.id"
+        );
+        
+        Long eventId = eventIdValue.longValue();
+
+        // 3. Purchase a ticket
+        MvcResult ticketResult = mockMvc.perform(
+                post("/api/v1/events/{id}/tickets", eventId)
+                    .header("Authorization", "Bearer " + token)
+            )
+            .andExpect(status().isCreated())
+            .andReturn();
+
+
+        Integer ticketIdValue = JsonPath.read(
+            ticketResult.getResponse().getContentAsString(),
+            "$.id"
+        );
+        Long ticketId = ticketIdValue.longValue();
+
+        // 4. Cancel the ticket for the first time
+        mockMvc.perform(
+                patch("/api/v1/events/{eventId}/tickets/{ticketId}/cancellation",
+                    eventId, ticketId)
+                    .header("Authorization", "Bearer " + token)
+            )
+            .andExpect(status().isOk());
+
+        // 5. Cancel the same ticket again
+        mockMvc.perform(
+                patch("/api/v1/events/{eventId}/tickets/{ticketId}/cancellation",
+                    eventId, ticketId)
+                    .header("Authorization", "Bearer " + token)
+            )
+            // Change this to the status defined by your API contract.
+            .andExpect(status().is4xxClientError());
+
+        // 6. Wait for asynchronous analytics processing
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
+            assertThat(ticketsSold(eventId)).isZero()
+        );
+    }
 }
