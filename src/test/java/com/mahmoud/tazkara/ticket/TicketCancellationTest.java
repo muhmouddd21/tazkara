@@ -65,7 +65,7 @@ public class TicketCancellationTest {
             new Event(
                 null,
                 "org@test.dev",
-                "The Finale",
+                "The Finaale",
                 "Cairo",
                 "music",
                 5

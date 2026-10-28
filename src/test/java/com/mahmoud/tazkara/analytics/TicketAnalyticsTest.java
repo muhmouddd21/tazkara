@@ -93,7 +93,7 @@ public class TicketAnalyticsTest {
 
     @Test 
     void threeSalesAndCancelledBecomeACountOfTwo() {
-        Event event = eventRepo.save(new Event(null, "org@test.dev", "Stream Night", "Cairo", "music", 10,Instant.now().plus(Duration.ofDays(10)),Instant.now().plus(Duration.ofDays(12))));
+        Event event = eventRepo.save(new Event(null, "org@test.dev", "Stream NightT", "Cairo", "music", 10,Instant.now().plus(Duration.ofDays(10)),Instant.now().plus(Duration.ofDays(12))));
 
         ticketsService.purchase("a@test.dev", event.id());
         ticketsService.purchase("b@test.dev", event.id());
