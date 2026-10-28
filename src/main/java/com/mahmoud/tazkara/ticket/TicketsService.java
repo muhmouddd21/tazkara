@@ -68,15 +68,16 @@ public class TicketsService {
         Ticket ticket =this.ticketRepo.findById(ticketId)
                     .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"ticket not found"));
 
-        if (!event.organizerEmail().equalsIgnoreCase(requesterEmail) && !ticket.buyerEmail().equalsIgnoreCase(requesterEmail)) {
+
+        if(!ticket.event().id().equals(eventId)){
             throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN, "You are not allowed to do this"
+                HttpStatus.NOT_FOUND
             );
         }
-
-        if (!ticket.event().id().equals(eventId)) {
+        
+        if (!event.organizerEmail().equalsIgnoreCase(requesterEmail) && !ticket.buyerEmail().equalsIgnoreCase(requesterEmail)) {
             throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST, "Ticket does not belong to this event"
+                HttpStatus.NOT_FOUND
             );
         }
 
