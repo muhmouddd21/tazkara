@@ -81,18 +81,18 @@ public class TicketsService {
         }
 
         Instant now = Instant.now();
-        
-        if (event.startAt() != null) {
-            Instant cancellationDeadline = event.startAt()
-                .minus(Duration.ofHours(48));
-        
-            if (!now.isBefore(cancellationDeadline)) {
-                throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "You can't cancel a ticket less than 48 hours before the event"
-                );
-            }
+
+  
+        Instant cancellationDeadline = event.startAt()
+            .minus(Duration.ofHours(48));
+    
+        if (!now.isBefore(cancellationDeadline)) {
+            throw new ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "You can't cancel a ticket less than 48 hours before the event"
+            );
         }
+        
         Instant cancelledAt = Instant.now();
 
         int updated = ticketRepo.cancelTicket(

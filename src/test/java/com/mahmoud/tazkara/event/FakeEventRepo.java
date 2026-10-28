@@ -61,7 +61,7 @@ public class FakeEventRepo implements EventRepo{
         Long id = (event.id() != null) ? event.id() : counter.incrementAndGet();
     
         Event stored = new Event(id, event.organizerEmail(),event.name(), event.city(),
-                event.category(), event.totalSeats());
+                event.category(), event.totalSeats(),event.startAt(),event.endAt());
         events.put(id, stored);
         return stored;
     }

@@ -46,27 +46,18 @@ public class Event {
 
     protected Event() {} 
 
+
     public Event(Long id, String organizerEmail, String name,
-        String city, String category, int totalSeats) {
+        String city, String category, int totalSeats, Instant startAt,Instant endAt) {
         this.id = id;
         this.organizerEmail = organizerEmail;
         this.name = name;
         this.city = city;
         this.category = category;
         this.totalSeats = totalSeats;
+        this.startAt =startAt;
+        this.endAt =endAt;
         }
-
-        public Event(Long id, String organizerEmail, String name,
-            String city, String category, int totalSeats, Instant startAt,Instant endAt) {
-            this.id = id;
-            this.organizerEmail = organizerEmail;
-            this.name = name;
-            this.city = city;
-            this.category = category;
-            this.totalSeats = totalSeats;
-            this.startAt =startAt;
-            this.endAt =endAt;
-            }
 
 
     public Long id() { return id; }

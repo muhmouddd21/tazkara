@@ -60,7 +60,9 @@ public class TicketsControllerTest {
                     "name": "Jazz Night",
                     "city": "Cairo",
                     "category": "music",
-                    "totalSeats": 100
+                    "totalSeats": 100,
+                    "startAt": "2027-06-01T18:00:00Z",
+                    "endAt": "2027-06-01T21:00:00Z"
                 }
                 """;
 

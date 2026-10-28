@@ -64,7 +64,7 @@ public class TicketAnalyticsTest {
 
     @Test 
     void threeSalesBecomeACountOfThree() {
-        Event event = eventRepo.save(new Event(null, "org@test.dev", "Stream Night", "Cairo", "music", 10));
+        Event event = eventRepo.save(new Event(null, "org@test.dev", "Stream Night", "Cairo", "music", 10,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
 
         ticketsService.purchase("a@test.dev", event.id());
         ticketsService.purchase("b@test.dev", event.id());
@@ -76,7 +76,7 @@ public class TicketAnalyticsTest {
     
     @Test
     void redeliveredEventIsCountedOnce() {
-        Event event = eventRepo.save(new Event(null, "org@test.dev", "Echo Stream", "Cairo", "music", 10));
+        Event event = eventRepo.save(new Event(null, "org@test.dev", "Echo Stream", "Cairo", "music", 10,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
         TicketResponseDTO first = ticketsService.purchase("first@test.dev", event.id());
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() -> assertThat(ticketsSold(event.id())).isEqualTo(1L));
 

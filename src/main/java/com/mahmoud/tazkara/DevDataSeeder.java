@@ -1,5 +1,6 @@
 package com.mahmoud.tazkara;
 
+import java.time.Duration;
 import java.time.Instant;
 
 import org.springframework.boot.CommandLineRunner;
@@ -28,9 +29,9 @@ public class DevDataSeeder {
             users.save(new User(null, "buyer@dev.tazkara",
                     encoder.encode("dev-password"), Plan.FREE));
 
-            events.save(new Event(null, organizer.email(), "Cairo Jazz Night", "Cairo", "music", 300));
-            events.save(new Event(null, organizer.email(), "Riyadh Tech Summit", "Riyadh", "conference", 1200));
-            events.save(new Event(null, organizer.email(), "Alexandria Book Fair", "Alexandria", "culture", 500));
+            events.save(new Event(null, organizer.email(), "Cairo Jazz Night", "Cairo", "music", 300,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
+            events.save(new Event(null, organizer.email(), "Riyadh Tech Summit", "Riyadh", "conference", 1200,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
+            events.save(new Event(null, organizer.email(), "Alexandria Book Fair", "Alexandria", "culture", 500,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
             System.out.println(">>> dev data seeded");
         };
     }

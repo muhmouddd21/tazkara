@@ -47,7 +47,9 @@ public class HttpCachingTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType("application/json")
                 .content("""
-                    {"name":"%s","city":"Alexandria","category":"music","totalSeats":100}
+                    {"name":"%s","city":"Alexandria","category":"music","totalSeats":100,
+                      "startAt": "2027-06-01T18:00:00Z",
+                      "endAt": "2027-06-01T21:00:00Z"}
                     """.formatted(name)))
             .andExpect(status().isCreated()).andReturn();
         return ((Number) JsonPath.read(r.getResponse().getContentAsString(), "$.id")).longValue();

@@ -61,7 +61,7 @@ public class EventService {
                     "an event named '" + request.name() + "' already exists in " + request.city());
         }
         Event event = new Event(null,email,request.name(), request.city(),
-                request.category(), request.totalSeats());
+                request.category(), request.totalSeats(),request.startAt(),request.endAt());
 
         try {
             return EventResponseDTO.from(eventRepo.save(event));

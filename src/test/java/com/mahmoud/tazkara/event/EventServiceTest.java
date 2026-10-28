@@ -8,6 +8,9 @@ import com.mahmoud.tazkara.ticket.FakeTicketRepo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+import java.time.Instant;
+
 
 public class EventServiceTest {
     private EventService service;
@@ -19,7 +22,7 @@ public class EventServiceTest {
     }
 
     private CreateEventRequest request(String name,String city){
-        return new CreateEventRequest(name, city, "music", 100);
+        return new CreateEventRequest(name, city, "music", 100,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33)));
     }
 
     @Test 

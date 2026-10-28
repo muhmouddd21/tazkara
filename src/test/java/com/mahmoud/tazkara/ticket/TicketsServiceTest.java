@@ -3,6 +3,9 @@ package com.mahmoud.tazkara.ticket;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,7 +27,7 @@ public class TicketsServiceTest {
     
     @Test 
     void purchaseSucceedsWhenSeatsRemain(){ 
-        this.eventRepo.save(new Event(1L, "mahmoud@gmail.com", "play","cairo", "music", 100));
+        this.eventRepo.save(new Event(1L, "mahmoud@gmail.com", "play","cairo", "music", 100,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
         this.service.purchase("ahmed@gmail.com", 1L);
 
         assertThat(service.myTickets("ahmed@gmail.com")).hasSize(1);
@@ -33,7 +36,7 @@ public class TicketsServiceTest {
 
     @Test 
     void purchaseRejectedWhenSoldOut(){ 
-        this.eventRepo.save(new Event(1L, "mahmoud@gmail.com", "play","cairo", "music", 1));
+        this.eventRepo.save(new Event(1L, "mahmoud@gmail.com", "play","cairo", "music", 1,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
         this.service.purchase("ahmed@gmail.com", 1L);
         
         assertThatThrownBy(()-> this.service.purchase("ahmed@gmail.com", 1L)).hasMessageContaining("sold out");

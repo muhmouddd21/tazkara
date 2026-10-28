@@ -37,7 +37,14 @@ public class EventsControllerTest {
     private MockMvc mockMvc;
     
     private static final String EVENT_JSON = """
-        {"name":"Jazz Night","city":"Cairo","category":"music","totalSeats":100}
+        {
+            "name": "Jazz Night",
+            "city": "Cairo",
+            "category": "music",
+            "totalSeats": 100,
+            "startAt": "2027-06-01T18:00:00Z",
+            "endAt": "2027-06-01T21:00:00Z"
+        }
         """;
 
 
@@ -92,7 +99,8 @@ public class EventsControllerTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType("application/json")
                 .content("""
-                        {"name":"  ","city":"Cairo","category":"music","totalSeats":0}"""))
+                        {"name":"  ","city":"Cairo","category":"music","totalSeats":0,  "startAt": "2027-06-01T18:00:00Z",
+        "endAt": "2027-06-01T21:00:00Z"}"""))
                 .andExpect(status().isBadRequest());
     }
     @Test

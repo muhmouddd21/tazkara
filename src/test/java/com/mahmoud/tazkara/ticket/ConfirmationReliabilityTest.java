@@ -3,6 +3,7 @@ package com.mahmoud.tazkara.ticket;
 
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.Instant;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ public class ConfirmationReliabilityTest {
 
 
     private TicketResponseDTO buyTicket(String eventName, String buyer) {
-        Event event = eventRepo.save(new Event(null, "org@test.dev", eventName, "Cairo", "music", 10));
+        Event event = eventRepo.save(new Event(null, "org@test.dev", eventName, "Cairo", "music", 10,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
         return ticketsService.purchase(buyer, event.id());
     }
 

@@ -2,6 +2,9 @@ package com.mahmoud.tazkara.event;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,7 +38,7 @@ public class EventCacheTest {
 
     @Test 
     void secondReadNeverReachesTheDatabase() {
-        EventResponseDTO created = eventService.create(new CreateEventRequest("Cache Fest", "Giza", "music", 50), "owner@test.dev", true);
+        EventResponseDTO created = eventService.create(new CreateEventRequest("Cache Fest", "Giza", "music", 50,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))), "owner@test.dev", true);
 
         eventService.get(created.id());                       
 
@@ -46,7 +49,7 @@ public class EventCacheTest {
     }
     @Test 
     void updateEvictsCacheAndReturnsFreshData(){
-        EventResponseDTO created = eventService.create(new CreateEventRequest("Evict Fest", "Giza", "music", 50), "owner@test.dev", true);
+        EventResponseDTO created = eventService.create(new CreateEventRequest("Evict Fest", "Giza", "music", 50,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))), "owner@test.dev", true);
         eventService.get(created.id());   //cached    
         
         UpdateEventRequest newEvent = new UpdateEventRequest("Evict Fest II", "Giza", "music", 50,created.version());

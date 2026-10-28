@@ -1,5 +1,7 @@
 package com.mahmoud.tazkara.ticket;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +41,7 @@ public class OversellingTest {
     @Test 
     void twentyRacingBuyersCannotOversellFiveSeats() throws Exception {
         Event event = eventRepo.save(
-            new Event(null, "org@test.dev", "The Finale", "Cairo", "music", 5));
+            new Event(null, "org@test.dev", "The Finale", "Cairo", "music", 5,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
             
         int buyers =20;
         ExecutorService pool= Executors.newFixedThreadPool(buyers);

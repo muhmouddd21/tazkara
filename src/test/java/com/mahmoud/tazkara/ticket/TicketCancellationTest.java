@@ -100,7 +100,7 @@ public class TicketCancellationTest {
                 "The Finaale",
                 "Cairo",
                 "music",
-                5
+                5,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))
             )
         );
 
@@ -178,6 +178,7 @@ public class TicketCancellationTest {
                 "Cairo",
                 "music",
                 5
+                ,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))
             )
         );
 
@@ -243,7 +244,7 @@ public class TicketCancellationTest {
                 "The Finaleee",
                 "Cairo",
                 "music",
-                5
+                5,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))
             )
         );
 
@@ -342,7 +343,7 @@ public class TicketCancellationTest {
                 "AC3 Event",
                 "Cairo",
                 "music",
-                5
+                5,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))
             )
         );
 
@@ -484,7 +485,9 @@ public class TicketCancellationTest {
                 "name": "Cancellation Test",
                 "city": "Cairo",
                 "category": "music",
-                "totalSeats": 10
+                "totalSeats": 10,  
+                "startAt": "2027-06-01T18:00:00Z",
+                 "endAt": "2027-06-01T21:00:00Z"
             }
             """;
 

@@ -1,6 +1,8 @@
 package com.mahmoud.tazkara.ticket;
 
 import java.time.Duration;
+import java.time.Instant;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
@@ -50,7 +52,7 @@ public class TicketConfirmationFlowTest {
 
     @Test 
     void purchaseSendsConfirmationAsynchronously() {
-        Event event = eventRepo.save(new Event(null, "org@test.dev", "Queue Night", "Cairo", "music", 5));
+        Event event = eventRepo.save(new Event(null, "org@test.dev", "Queue Night", "Cairo", "music", 5,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
 
         TicketResponseDTO ticket = ticketsService.purchase("fan@test.dev", event.id());
 
@@ -61,7 +63,7 @@ public class TicketConfirmationFlowTest {
 
     @Test
     void rolledBackPurchaseSendsNoConfirmation() {
-        Event event = eventRepo.save(new Event(null, "org@test.dev", "Ghost Gig", "Cairo", "music", 5));
+        Event event = eventRepo.save(new Event(null, "org@test.dev", "Ghost Gig", "Cairo", "music", 5,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))));
 
         tx.executeWithoutResult(status -> {                
             ticketsService.purchase("ghost@test.dev", event.id());

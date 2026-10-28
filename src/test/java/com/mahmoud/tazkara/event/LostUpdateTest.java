@@ -3,6 +3,9 @@ package com.mahmoud.tazkara.event;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Duration;
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,7 +28,7 @@ public class LostUpdateTest {
     @Test 
     void staleTabCannotSilentlyEraseAnEdit() {
         EventResponseDTO created = eventService.create(
-        new CreateEventRequest("Jazz Night", "Cairo", "music", 100),"owner@test.dev", true); 
+        new CreateEventRequest("Jazz Night", "Cairo", "music", 100,Instant.now().plus(Duration.ofDays(30)),Instant.now().plus(Duration.ofDays(33))),"owner@test.dev", true); 
             
             
         eventService.update(created.id(),
