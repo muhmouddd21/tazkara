@@ -53,7 +53,7 @@ public class RabbitConfig {
     Queue cancellationsQueue() { 
         return QueueBuilder.durable(CANCELLATIONS_QUEUE)
         .deadLetterExchange(DLX)
-        .deadLetterRoutingKey(CANCELLATIONS_DLQ)
+        .deadLetterRoutingKey(CANCELLATIONS_QUEUE)
         .build(); 
     }
 
