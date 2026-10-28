@@ -105,5 +105,25 @@ public class TicketAnalyticsTest {
         await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
             assertThat(ticketsSold(event.id())).isEqualTo(2L));
     }
+    // purchase, cancel, re-send the purchase, and assert the count is still 0.
+    @Test 
+    void purchaseCancelResendthePurchaseStillZero() {
+        Event event = eventRepo.save(new Event(null, "org@test.dev", "Stream NightTR", "Cairo", "music", 10,Instant.now().plus(Duration.ofDays(10)),Instant.now().plus(Duration.ofDays(12))));
 
+        TicketResponseDTO ticketC = ticketsService.purchase("c@test.dev", event.id());
+
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
+            assertThat(ticketsSold(event.id())).isEqualTo(1L)
+        );
+        ticketsService.cancel("c@test.dev", ticketC.id(), event.id());
+
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
+            assertThat(ticketsSold(event.id())).isZero());
+    
+        kafkaTemplate.send(KafkaConfig.TICKET_EVENTS_TOPIC, event.id().toString(),
+        new TicketPurchasedMessage(ticketC.id(), event.id(), "Echo Stream", "first@test.dev"));
+
+        await().atMost(Duration.ofSeconds(15)).untilAsserted(() ->
+            assertThat(ticketsSold(event.id())).isZero());
+    }
 }
