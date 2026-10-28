@@ -1,6 +1,7 @@
 package com.mahmoud.tazkara.event;
 
 import java.time.Duration;
+import java.util.List;
 
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -130,6 +131,13 @@ public class EventsController {
     @GetMapping("/{eventId}/availableseats")
     public NumberOfSeatsDTO getNumbersOfAvailableSeats(@PathVariable Long eventId) {
         return eventService.AvailableSeats(eventId);
+    }
+
+    @GetMapping("/tickets")
+    public List<TicketResponseDTO> getTickets(Authentication authentication) {
+        String email = authentication.getName();
+
+        return this.ticketsService.myTickets(email);
     }
     
 
