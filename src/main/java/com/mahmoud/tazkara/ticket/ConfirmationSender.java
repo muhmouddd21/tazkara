@@ -17,12 +17,9 @@ void send(TicketPurchasedMessage message);
 class LoggingConfirmationSender implements ConfirmationSender {   
     private static final Logger log = LoggerFactory.getLogger(LoggingConfirmationSender.class);
     public void send(TicketPurchasedMessage m) {
-        try {
-            Thread.sleep(15000);
+
             log.info("CONFIRMATION → {} : ticket #{} for {}", m.buyerEmail(), m.ticketId(), m.eventName());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
         // throw new EmailDeliveryException("mahmoud test");
     }
 }

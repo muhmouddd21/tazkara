@@ -17,12 +17,8 @@ public interface CancellationSender {
 class LoggingCancellationSender implements CancellationSender {   
     private static final Logger log = LoggerFactory.getLogger(LoggingCancellationSender.class);
     public void send(TicketCancelledMessage m) {
-        try {
-            Thread.sleep(15000);
+        
             log.info("Cancellation → {} : ticket #{} for {}", m.buyerEmail(), m.ticketId(), m.eventName());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         // throw new EmailDeliveryException("mahmoud test");
     }
 }
