@@ -122,7 +122,7 @@ public class TicketCancellationTest {
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
             Ticket fresh = ticketRepo.findById(ticketId).orElseThrow();
 
-            assertThat(fresh.confirmation_sent_at()).isNotNull();
+            assertThat(fresh.confirmationSentAt()).isNotNull();
         });
 
         // 4. Cancel the ticket as the event organizer.
@@ -196,7 +196,7 @@ public class TicketCancellationTest {
         // 3. Wait for the purchase confirmation to be processed
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
             Ticket fresh = ticketRepo.findById(ticketId).orElseThrow();
-            assertThat(fresh.confirmation_sent_at()).isNotNull();
+            assertThat(fresh.confirmationSentAt()).isNotNull();
         });
 
         // 4. Organizer cancels the ticket
@@ -362,7 +362,7 @@ public class TicketCancellationTest {
             assertThat(
                 ticketRepo.findById(ticketId)
                     .orElseThrow()
-                    .confirmation_sent_at()
+                    .confirmationSentAt()
             ).isNotNull()
         );
 

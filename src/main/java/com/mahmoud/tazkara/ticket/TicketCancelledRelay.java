@@ -26,7 +26,7 @@ public class TicketCancelledRelay {
         try {
             rabbit.convertAndSend(RabbitConfig.EXCHANGE, RabbitConfig.CANCELLED_KEY, message);
         } catch (AmqpException e) {
-            log.warn("ticket {} committed but its confirmation was not queued", message.ticketId(), e);
+            log.warn("ticket {} committed but its Cancellation was not queued", message.ticketId(), e);
         }
     }
 

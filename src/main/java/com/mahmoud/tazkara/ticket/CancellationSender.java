@@ -17,7 +17,7 @@ public interface CancellationSender {
 class LoggingCancellationSender implements CancellationSender {   
     private static final Logger log = LoggerFactory.getLogger(LoggingCancellationSender.class);
     public void send(TicketCancelledMessage m) {
-        
+
             log.info("Cancellation → {} : ticket #{} for {}", m.buyerEmail(), m.ticketId(), m.eventName());
         // throw new EmailDeliveryException("mahmoud test");
     }
@@ -27,14 +27,14 @@ class LoggingCancellationSender implements CancellationSender {
 class CancellationListener {
     private final CancellationService cancelService;
 
-    CancellationListener(CancellationSender sender, CancellationService cancelService) 
+    CancellationListener(CancellationService cancelService) 
     { 
     this.cancelService = cancelService;
 
     }
 
     @RabbitListener (queues = RabbitConfig.CANCELLATIONS_QUEUE)
-    void onTicketPurchased(TicketCancelledMessage message) {
+    void onTicketCancelled(TicketCancelledMessage message) {
         this.cancelService.confirm(message);
     }
 }

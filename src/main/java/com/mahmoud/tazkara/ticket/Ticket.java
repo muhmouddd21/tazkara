@@ -32,7 +32,7 @@ public class Ticket{
     @Column(nullable = false, length = 20)
     private TicketStatus status = TicketStatus.PURCHASED;
 
-    private Instant confirmation_sent_at;
+    private Instant confirmationSentAt;
 
     private Instant cancelledAt;
 
@@ -53,8 +53,8 @@ public class Ticket{
     public Event event() { return event; }
     public String buyerEmail() { return buyerEmail; }
     public Instant purchasedAt() { return purchasedAt; }
-    public Instant confirmation_sent_at() {
-        return confirmation_sent_at;
+    public Instant confirmationSentAt() {
+        return confirmationSentAt;
     }
 
     public TicketStatus status() {

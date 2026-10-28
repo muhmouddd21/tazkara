@@ -28,7 +28,7 @@ class LoggingConfirmationSender implements ConfirmationSender {
 @Component
 class ConfirmationListener {
     private final ConfirmationService confirmService;
-    ConfirmationListener(ConfirmationSender sender, ConfirmationService confirmService) 
+    ConfirmationListener(ConfirmationService confirmService) 
     { 
     this.confirmService = confirmService;
 

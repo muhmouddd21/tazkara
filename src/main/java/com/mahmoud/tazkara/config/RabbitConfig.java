@@ -58,11 +58,11 @@ public class RabbitConfig {
     }
 
     @Bean 
-    Binding confirmationsBinding(Queue confirmationsQueue, TopicExchange ticketsExchange) {
+    Binding confirmationsBinding(TopicExchange ticketsExchange) {
         return BindingBuilder.bind(confirmationsQueue()).to(ticketsExchange()).with(PURCHASED_KEY);
     }
     @Bean 
-    Binding cancellationBinding(Queue confirmationsQueue, TopicExchange ticketsExchange) {
+    Binding cancellationBinding(TopicExchange ticketsExchange) {
         return BindingBuilder.bind(cancellationsQueue()).to(ticketsExchange()).with(CANCELLED_KEY);
     }
 
@@ -72,7 +72,7 @@ public class RabbitConfig {
     }
 
     @Bean 
-    Binding cancellationssDlqBinding() {
+    Binding cancellationsDlqBinding() {
         return BindingBuilder.bind(cancellationsDlq()).to(deadLetterExchange()).with(CANCELLATIONS_QUEUE);
     }
 
