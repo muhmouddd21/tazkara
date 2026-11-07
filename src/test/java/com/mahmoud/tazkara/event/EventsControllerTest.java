@@ -133,7 +133,10 @@ public class EventsControllerTest {
                 .content("""
                         {"name":"Backwards Gig","city":"Cairo","category":"music","totalSeats":10,
                          "startAt":"%s","endAt":"%s"}""".formatted(START_AT, START_AT.minus(Duration.ofHours(3)))))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.type").value("https://tazkara.dev/problems/validation"))
+                .andExpect(jsonPath("$.errors[0].field").value("endAfterStart"))
+                .andExpect(jsonPath("$.errors[0].message").value("End date and time must be after start date and time"));
     }
 
     private Long createEventWithSeats(String token, String name, int seats) throws Exception {

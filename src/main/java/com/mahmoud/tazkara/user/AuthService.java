@@ -1,12 +1,12 @@
 package com.mahmoud.tazkara.user;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
+import com.mahmoud.tazkara.error.DomainException;
 import com.mahmoud.tazkara.security.JwtService;
+import static com.mahmoud.tazkara.error.DomainException.Kind.*;
 
 
 
@@ -25,7 +25,7 @@ public class AuthService {
     @Transactional 
     public void register(RegisterRequest registerRequest){
         if(userRepo.findByEmail(registerRequest.email()).isPresent()){
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"email already registered");
+            throw new DomainException(CONFLICT, "email-taken", "email already registered");
         }
         userRepo.save(new User(null,registerRequest.email(),encoder.encode(registerRequest.password()), Plan.FREE));
     }
@@ -36,14 +36,14 @@ public class AuthService {
         return userRepo.findByEmail(request.email())
                 .filter(user -> encoder.matches(request.password(), user.passwordHash()))
                 .map(user -> new LoginResponse(jwtservice.generate(user)))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                .orElseThrow(() -> new DomainException(UNAUTHENTICATED, "bad-credentials",
                         "invalid email or password"));
     }
 
     @Transactional 
     public void upgradeToPro(String email){
         
-        User user =userRepo.findByEmail(email).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"no such user"));
+        User user =userRepo.findByEmail(email).orElseThrow(()-> new DomainException(NOT_FOUND, "user-not-found", "no such user"));
         userRepo.save(new User(user.id(),user.email(),user.passwordHash(),Plan.PRO));
     }
 }

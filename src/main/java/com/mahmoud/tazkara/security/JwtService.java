@@ -1,11 +1,11 @@
 package com.mahmoud.tazkara.security;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.mahmoud.tazkara.user.User;
@@ -19,12 +19,10 @@ public class JwtService {
     private final SecretKey secretKey;
     private final long expiryMinutes;
 
-    public JwtService(@Value ("${tazkara.jwt.secret}") String secret,
-        @Value("${tazkara.jwt.expiry-minutes}") long expiryMinutes) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
-        this.expiryMinutes = expiryMinutes;
+    public JwtService(JwtProperties props) {
+        this.secretKey = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
+        this.expiryMinutes = props.expiryMinutes();
     }
-
 
     public String generate(User user) {
         Date now = new Date();

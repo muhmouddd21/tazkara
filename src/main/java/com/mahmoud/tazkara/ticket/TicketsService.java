@@ -13,8 +13,10 @@ import org.springframework.web.server.ResponseStatusException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import com.mahmoud.tazkara.error.DomainException;
 import com.mahmoud.tazkara.event.Event;
 import com.mahmoud.tazkara.event.EventRepo;
+import static com.mahmoud.tazkara.error.DomainException.Kind.*;
 
 
 @Service 
@@ -37,7 +39,7 @@ public class TicketsService {
     @CacheEvict (cacheNames = "stats",key = "'event-stats'")
     public TicketResponseDTO purchase(String buyerEmail,Long eventId){
         Event event = this.eventRepo.findWithLockById(eventId)
-        .orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND,"event not found"));
+        .orElseThrow(()-> new DomainException(NOT_FOUND, "event-not-found", "event " + eventId + " not found"));
         
 
         long sold = ticketRepo.countByEventIdAndStatus(
@@ -46,7 +48,7 @@ public class TicketsService {
         );
                  
         if (sold >= event.totalSeats()) {                       
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "event is sold out");
+            throw new DomainException(CONFLICT, "sold-out", "event is sold out");
         }
         Ticket saved = ticketRepo.save(new Ticket(event, buyerEmail, Instant.now()));
         events.publishEvent(new TicketPurchasedMessage(saved.id(), eventId, event.name(), buyerEmail));
